@@ -21,7 +21,7 @@ class ButtonTableViewCell: UITableViewCell {
     
     @objc
     func buttonDidTapped() {
-        callBack()
+        Theme.shared.switchTheme()
     }
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {

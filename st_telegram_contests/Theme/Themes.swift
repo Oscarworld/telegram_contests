@@ -22,10 +22,11 @@ class Theme {
     var mode: ThemeMode = (ThemeMode(rawValue: (UserDefaults.standard.value(forKey: "ThemeModeKey") as? Int) ?? 0) ?? .day) {
         didSet {
             UserDefaults.standard.setValue(mode.rawValue, forKey: "ThemeModeKey")
+            NotificationCenter.default.post(name: .didSwitchTheme, object: nil)
         }
     }
     
-    func swithTheme() {
+    func switchTheme() {
         switch mode {
         case .day:
             mode = .night
@@ -81,6 +82,15 @@ extension Theme {
         }
     }
     
+    var controlColor: UIColor {
+        switch mode {
+        case .day:
+            return UIColor(netHex: 0xCAD4DE)
+        case .night:
+            return UIColor(netHex: 0x354659)
+        }
+    }
+    
     var buttonTextColor: UIColor {
         return UIColor(netHex: 0x007AFF)
     }
@@ -93,4 +103,8 @@ extension Theme {
             return "Switch to Day Mode"
         }
     }
+}
+
+extension Notification.Name {
+    static let didSwitchTheme = Notification.Name("didSwitchTheme")
 }

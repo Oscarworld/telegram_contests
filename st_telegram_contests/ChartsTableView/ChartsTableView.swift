@@ -10,16 +10,7 @@ import UIKit
 
 class ChartsTableView: UITableView {
     
-    var data: [(title: String, items: [(line: String, color: UIColor)])] = [] {
-        didSet {
-            selected = data.map{ $0.items.map{ _ in false } }
-            reloadData()
-        }
-    }
-    
-    var selected: [[Bool]] = [[]]
-    
-    var callBack: () -> Void = {}
+    var charts: [Chart] = []
     
     private let cellButtonIdentifier = "cell_button"
     private let cellLineIdentifier = "cell_line"
@@ -44,15 +35,15 @@ class ChartsTableView: UITableView {
 
 extension ChartsTableView: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        return data.count + 1
+        return charts.count + 1
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return section != data.count ? data[section].items.count + 1 : 1
+        return section != charts.count ? charts[section].graphs.count + 1 : 1
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if indexPath.section == data.count {
+        if indexPath.section == charts.count {
             guard let cell = tableView.dequeueReusableCell(withIdentifier: cellButtonIdentifier, for: indexPath) as? ButtonTableViewCell else {
                 fatalError("Can't dequeue cell")
             }
@@ -61,7 +52,6 @@ extension ChartsTableView: UITableViewDataSource {
             cell.button.setTitle(Theme.shared.switchButtonText, for: .normal)
             cell.button.setTitleColor(Theme.shared.buttonTextColor, for: .normal)
             cell.button.backgroundColor = Theme.shared.mainColor
-            cell.callBack = { [weak self] in self?.callBack() }
             
             return cell
         } else {
@@ -72,8 +62,17 @@ extension ChartsTableView: UITableViewDataSource {
                 
                 cell.selectionStyle = .none
                 cell.backgroundColor = Theme.shared.mainColor
+                
                 cell.chartView.backgroundColor = Theme.shared.additionalColor
-                cell.controlView.backgroundColor = Theme.shared.additionalColor
+                cell.chartSelector.mainColor = Theme.shared.mainColor
+                cell.chartSelector.controlColor = Theme.shared.controlColor
+                
+                cell.setChart(charts[indexPath.section])
+                
+                cell.changeSelectorCallback = { [weak self] lowerValue, upperValue in
+                    self?.charts[indexPath.section].lowerValue = lowerValue
+                    self?.charts[indexPath.section].upperValue = upperValue
+                }
                 
                 return cell
             } else {
@@ -81,21 +80,21 @@ extension ChartsTableView: UITableViewDataSource {
                     fatalError("Can't dequeue cell")
                 }
                 
-                let item = data[indexPath.section].items[indexPath.row - 1]
-                let isSelected = selected[indexPath.section][indexPath.row - 1]
+                let item = charts[indexPath.section].graphs[indexPath.row - 1]
                 
-                if isSelected {
+                if !item.isHidden {
                     tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
                 }
                 
-                cell.isSelected = isSelected
+                cell.isSelected = !item.isHidden
                 
                 cell.selectionStyle = .none
                 cell.titleLabel.textColor = Theme.shared.mainTextColor
                 cell.backgroundColor = Theme.shared.mainColor
-                cell.titleLabel.text = item.line
+                cell.titleLabel.text = item.name
                 cell.rectView.backgroundColor = item.color
-                if indexPath.row != data[indexPath.section].items.count {
+                
+                if indexPath.row != charts[indexPath.section].graphs.count {
                     cell.bottomView.isHidden = false
                     cell.bottomView.backgroundColor = Theme.shared.additionalColor
                 } else {
@@ -108,13 +107,13 @@ extension ChartsTableView: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        if section == data.count {
+        if section == charts.count {
             let view = UIView()
             view.backgroundColor = Theme.shared.additionalColor
             return view
         } else {
             let view = HeaderView()
-            view.titleLabel.text = data[section].title
+            view.titleLabel.text = "FOLLOWERS"
             view.backgroundColor = Theme.shared.additionalColor
             view.titleLabel.textColor = Theme.shared.additionalTextColor
             return view
@@ -124,25 +123,31 @@ extension ChartsTableView: UITableViewDataSource {
 
 extension ChartsTableView: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if indexPath.section != data.count, indexPath.row != 0 {
-            selected[indexPath.section][indexPath.row - 1] = true
+        if indexPath.section != charts.count, indexPath.row != 0 {
+            charts[indexPath.section].graphs[indexPath.row - 1].isHidden = false
             if let cell = tableView.cellForRow(at: indexPath) {
                 cell.isSelected = true
+                if let graphCell = tableView.cellForRow(at: IndexPath(row: 0, section: indexPath.section)) as? ChartTableViewCell {
+                    graphCell.setChart(charts[indexPath.section])
+                }
             }
         }
     }
     
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        if indexPath.section != data.count, indexPath.row != 0 {
-            selected[indexPath.section][indexPath.row - 1] = false
+        if indexPath.section != charts.count, indexPath.row != 0 {
+            charts[indexPath.section].graphs[indexPath.row - 1].isHidden = true
             if let cell = tableView.cellForRow(at: indexPath) {
                 cell.isSelected = false
+                if let graphCell = tableView.cellForRow(at: IndexPath(row: 0, section: indexPath.section)) as? ChartTableViewCell {
+                    graphCell.setChart(charts[indexPath.section])
+                }
             }
         }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        if indexPath.section != data.count, indexPath.row == 0 {
+        if indexPath.section != charts.count, indexPath.row == 0 {
             return tableView.bounds.width
         } else {
             return 50
@@ -150,7 +155,7 @@ extension ChartsTableView: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        if section == data.count {
+        if section == charts.count {
             return 40
         } else {
             return 60
