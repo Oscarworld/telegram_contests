@@ -27,12 +27,14 @@ class ChartRangeSelector: UIControl {
     lazy var trackLayer: CALayer = {
         var layer = CALayer()
         layer.backgroundColor = mainColor.cgColor
+        layer.contentsScale = UIScreen.main.scale
         return layer
     }()
     
     lazy var leftBackgroundLayer: CALayer = {
         var layer = CALayer()
         layer.backgroundColor = UIColor.black.cgColor
+        layer.contentsScale = UIScreen.main.scale
         layer.opacity = 0.1
         return layer
     }()
@@ -40,6 +42,7 @@ class ChartRangeSelector: UIControl {
     lazy var rightBackgroundLayer: CALayer = {
         var layer = CALayer()
         layer.backgroundColor = UIColor.black.cgColor
+        layer.contentsScale = UIScreen.main.scale
         layer.opacity = 0.1
         return layer
     }()
@@ -47,6 +50,7 @@ class ChartRangeSelector: UIControl {
     lazy var lowerThumbLayer: RangeSliderThumbLayer = {
         var layer = RangeSliderThumbLayer()
         layer.rangeSelector = self
+        layer.contentsScale = UIScreen.main.scale
         layer.cornerRadius = 3.0
         layer.masksToBounds = true
         layer.maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner]
@@ -56,6 +60,7 @@ class ChartRangeSelector: UIControl {
     lazy var upperThumbLayer: RangeSliderThumbLayer = {
         var layer = RangeSliderThumbLayer()
         layer.rangeSelector = self
+        layer.contentsScale = UIScreen.main.scale
         layer.cornerRadius = 3.0
         layer.masksToBounds = true
         layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
@@ -64,11 +69,13 @@ class ChartRangeSelector: UIControl {
     
     lazy var topBorderLayer: CALayer = {
         var layer = CALayer()
+        layer.contentsScale = UIScreen.main.scale
         return layer
     }()
     
     lazy var bottomBorderLayer: CALayer = {
         var layer = CALayer()
+        layer.contentsScale = UIScreen.main.scale
         return layer
     }()
     
@@ -102,11 +109,9 @@ class ChartRangeSelector: UIControl {
         if lowerThumbLayer.highlighted {
             lowerValue += deltaValue
             lowerValue = boundValue(value: lowerValue, toLowerValue: 0.0, upperValue: upperValue - 0.2)
-            print("lower", lowerValue)
         } else if upperThumbLayer.highlighted {
             upperValue += deltaValue
             upperValue = boundValue(value: upperValue, toLowerValue: lowerValue + 0.2, upperValue: 1.0)
-            print("upper", upperValue)
         }
         
         CATransaction.begin()
