@@ -29,7 +29,7 @@ class ChartTableViewCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        
+        alpha = 1.0
         layer.addSublayer(chartLayer)
         addSubview(chartSelector)
         
@@ -54,10 +54,14 @@ class ChartTableViewCell: UITableViewCell {
     }
     
     func updateTheme() {
-        alpha = 1.0
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        
         backgroundColor = Theme.shared.mainColor
         chartLayer.backgroundColor = Theme.shared.mainColor.cgColor
         chartSelector.updateTheme()
+        
+        CATransaction.commit()
     }
     
     func configure(chart: Chart) {
