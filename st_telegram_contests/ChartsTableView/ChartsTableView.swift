@@ -23,9 +23,9 @@ class ChartsTableView: UITableView {
         register(ChartTableViewCell.self, forCellReuseIdentifier: cellChartIdentifier)
         allowsMultipleSelection = true
         separatorStyle = .none
+        tableFooterView = UIView()
         delegate = self
         dataSource = self
-        tableFooterView = UIView()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -34,18 +34,20 @@ class ChartsTableView: UITableView {
 }
 
 extension ChartsTableView: UITableViewDataSource {
+    
     func numberOfSections(in tableView: UITableView) -> Int {
         return charts.count + 1
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return section != charts.count ? charts[section].graphs.count + 1 : 1
+        return section == charts.count ? 1 : charts[section].graphs.count + 1
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if indexPath.section == charts.count {
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: cellButtonIdentifier, for: indexPath) as? ButtonTableViewCell else {
-                fatalError("Can't dequeue cell")
+        guard indexPath.section != charts.count else {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: cellButtonIdentifier,
+                                                           for: indexPath) as? ButtonTableViewCell else {
+                fatalError("Can't dequeue reusable cell")
             }
             
             cell.selectionStyle = .none
@@ -54,56 +56,57 @@ extension ChartsTableView: UITableViewDataSource {
             cell.button.backgroundColor = Theme.shared.mainColor
             
             return cell
-        } else {
-            if indexPath.row == 0 {
-                guard let cell = tableView.dequeueReusableCell(withIdentifier: cellChartIdentifier, for: indexPath) as? ChartTableViewCell else {
-                    fatalError("Can't dequeue cell")
-                }
-                
-                cell.selectionStyle = .none
-                cell.backgroundColor = Theme.shared.mainColor
-                
-                cell.chartView.backgroundColor = Theme.shared.additionalColor
-                cell.chartSelector.mainColor = Theme.shared.mainColor
-                cell.chartSelector.controlColor = Theme.shared.controlColor
-                
-                cell.setChart(charts[indexPath.section])
-                
-                cell.changeSelectorCallback = { [weak self] lowerValue, upperValue in
-                    self?.charts[indexPath.section].lowerValue = lowerValue
-                    self?.charts[indexPath.section].upperValue = upperValue
-                }
-                
-                return cell
-            } else {
-                guard let cell = tableView.dequeueReusableCell(withIdentifier: cellLineIdentifier, for: indexPath) as? LineTableViewCell else {
-                    fatalError("Can't dequeue cell")
-                }
-                
-                let item = charts[indexPath.section].graphs[indexPath.row - 1]
-                
-                if !item.isHidden {
-                    tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
-                }
-                
-                cell.isSelected = !item.isHidden
-                
-                cell.selectionStyle = .none
-                cell.titleLabel.textColor = Theme.shared.mainTextColor
-                cell.backgroundColor = Theme.shared.mainColor
-                cell.titleLabel.text = item.name
-                cell.rectView.backgroundColor = item.color
-                
-                if indexPath.row != charts[indexPath.section].graphs.count {
-                    cell.bottomView.isHidden = false
-                    cell.bottomView.backgroundColor = Theme.shared.additionalColor
-                } else {
-                    cell.bottomView.isHidden = true
-                }
-                
-                return cell
-            }
         }
+        
+        guard indexPath.row != 0 else {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: cellChartIdentifier,
+                                                           for: indexPath) as? ChartTableViewCell else {
+                fatalError("Can't dequeue cell")
+            }
+            
+            cell.selectionStyle = .none
+            cell.backgroundColor = Theme.shared.mainColor
+            cell.chartLayer.backgroundColor = Theme.shared.additionalColor.cgColor
+            cell.chartSelector.mainColor = Theme.shared.mainColor
+            cell.chartSelector.controlColor = Theme.shared.controlColor
+            
+            cell.configure(chart: charts[indexPath.section])
+            cell.callback = { [weak self] lowerValue, upperValue in
+                self?.charts[indexPath.section].lowerValue = lowerValue
+                self?.charts[indexPath.section].upperValue = upperValue
+            }
+            
+            cell.setNeedsDisplay()
+            
+            return cell
+        }
+        
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellLineIdentifier, for: indexPath) as? LineTableViewCell else {
+            fatalError("Can't dequeue cell")
+        }
+        
+        let item = charts[indexPath.section].graphs[indexPath.row - 1]
+        
+        if !item.isHidden {
+            tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
+        }
+        
+        cell.isSelected = !item.isHidden
+        
+        cell.selectionStyle = .none
+        cell.titleLabel.textColor = Theme.shared.mainTextColor
+        cell.backgroundColor = Theme.shared.mainColor
+        cell.titleLabel.text = item.name
+        cell.rectView.backgroundColor = item.color
+        
+        if indexPath.row != charts[indexPath.section].graphs.count {
+            cell.bottomView.isHidden = false
+            cell.bottomView.backgroundColor = Theme.shared.additionalColor
+        } else {
+            cell.bottomView.isHidden = true
+        }
+        
+        return cell
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {

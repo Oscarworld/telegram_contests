@@ -19,14 +19,12 @@ class ViewController: UIViewController {
     }()
     
     private func updateColors() {
+        self.view.backgroundColor = self.theme.additionalColor
+        self.navigationController?.navigationBar.barTintColor = self.theme.mainColor
+        self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: self.theme.mainTextColor]
+        self.tableView.backgroundColor = self.theme.additionalColor
+        UIApplication.shared.statusBarStyle = self.theme.barStyle
         self.tableView.reloadData()
-        UIView.animate(withDuration: 0.2) { [unowned self] in
-            self.view.backgroundColor = self.theme.additionalColor
-            self.navigationController?.navigationBar.barTintColor = self.theme.mainColor
-            self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: self.theme.mainTextColor]
-            self.tableView.backgroundColor = self.theme.additionalColor
-            UIApplication.shared.statusBarStyle = self.theme.barStyle
-        }
     }
     
     override func viewDidLoad() {
@@ -38,7 +36,7 @@ class ViewController: UIViewController {
         }
         
         navigationItem.title = "Statistics"
-        navigationController?.navigationBar.isTranslucent = false
+        //navigationController?.navigationBar.isTranslucent = false
         updateColors()
         
         view.addSubview(tableView)

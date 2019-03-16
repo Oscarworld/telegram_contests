@@ -64,6 +64,15 @@ extension Theme {
         }
     }
     
+    var axisColor: UIColor {
+        switch mode {
+        case .day:
+            return UIColor(netHex: 0xE1E2E3)
+        case .night:
+            return UIColor(netHex: 0x131B23)
+        }
+    }
+    
     var mainTextColor: UIColor {
         switch mode {
         case .day:
@@ -82,12 +91,30 @@ extension Theme {
         }
     }
     
+    var axisTextColor: UIColor {
+        switch mode {
+        case .day:
+            return UIColor(netHex: 0x989EA2)
+        case .night:
+            return UIColor(netHex: 0x5D6D7E)
+        }
+    }
+    
     var controlColor: UIColor {
         switch mode {
         case .day:
-            return UIColor(netHex: 0xCAD4DE)
+            return UIColor(netHex: 0xC9D4DF).withAlphaComponent(0.95)
         case .night:
-            return UIColor(netHex: 0x354659)
+            return UIColor(netHex: 0x394859).withAlphaComponent(0.95)
+        }
+    }
+    
+    var backgroundTrackColor: UIColor {
+        switch mode {
+        case .day:
+            return UIColor(netHex: 0xF2F5F8).withAlphaComponent(0.75)
+        case .night:
+            return UIColor(netHex: 0x1B293A).withAlphaComponent(0.75)
         }
     }
     

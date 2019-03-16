@@ -10,8 +10,6 @@ import UIKit
 
 class ButtonTableViewCell: UITableViewCell {
     
-    var callBack: () -> Void = {}
-    
     lazy var button: UIButton = {
         var button = UIButton()
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -19,8 +17,13 @@ class ButtonTableViewCell: UITableViewCell {
         return button
     }()
     
-    @objc
-    func buttonDidTapped() {
+    func updateTheme() {
+        button.setTitle(Theme.shared.switchButtonText, for: .normal)
+        button.setTitleColor(Theme.shared.buttonTextColor, for: .normal)
+        button.backgroundColor = Theme.shared.mainColor
+    }
+    
+    @objc func buttonDidTapped() {
         Theme.shared.switchTheme()
     }
     

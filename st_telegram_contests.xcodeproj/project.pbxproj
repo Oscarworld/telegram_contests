@@ -18,11 +18,12 @@
 		297CA7E02237FE8400F27B2D /* LineTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 297CA7DF2237FE8400F27B2D /* LineTableViewCell.swift */; };
 		297CA7E22237FE8C00F27B2D /* ChartTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 297CA7E12237FE8C00F27B2D /* ChartTableViewCell.swift */; };
 		297CA7E522380DFA00F27B2D /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 297CA7E422380DFA00F27B2D /* HeaderView.swift */; };
+		297D686B223AA3200085253A /* ChartLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 297D686A223AA3200085253A /* ChartLayer.swift */; };
 		29DAF3E82238BD44003376A9 /* chart_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 29DAF3E72238BD44003376A9 /* chart_data.json */; };
 		29DAF3EC2238BE15003376A9 /* Chart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DAF3EB2238BE15003376A9 /* Chart.swift */; };
 		29DAF3EF2238CC1A003376A9 /* ChartRangeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DAF3EE2238CC1A003376A9 /* ChartRangeSelector.swift */; };
 		29DAF3F222392DB6003376A9 /* Graph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DAF3F122392DB6003376A9 /* Graph.swift */; };
-		29DAF3F4223949CE003376A9 /* Drawer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DAF3F3223949CE003376A9 /* Drawer.swift */; };
+		29DAF3F4223949CE003376A9 /* CGContext+Drawer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DAF3F3223949CE003376A9 /* CGContext+Drawer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,11 +40,12 @@
 		297CA7DF2237FE8400F27B2D /* LineTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineTableViewCell.swift; sourceTree = "<group>"; };
 		297CA7E12237FE8C00F27B2D /* ChartTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartTableViewCell.swift; sourceTree = "<group>"; };
 		297CA7E422380DFA00F27B2D /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
+		297D686A223AA3200085253A /* ChartLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartLayer.swift; sourceTree = "<group>"; };
 		29DAF3E72238BD44003376A9 /* chart_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = chart_data.json; sourceTree = "<group>"; };
 		29DAF3EB2238BE15003376A9 /* Chart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chart.swift; sourceTree = "<group>"; };
 		29DAF3EE2238CC1A003376A9 /* ChartRangeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartRangeSelector.swift; sourceTree = "<group>"; };
 		29DAF3F122392DB6003376A9 /* Graph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Graph.swift; sourceTree = "<group>"; };
-		29DAF3F3223949CE003376A9 /* Drawer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Drawer.swift; sourceTree = "<group>"; };
+		29DAF3F3223949CE003376A9 /* CGContext+Drawer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CGContext+Drawer.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,11 +82,10 @@
 				29DAF3EA2238BD66003376A9 /* Supports */,
 				29DAF3E92238BD53003376A9 /* Theme */,
 				297CA7DB2237FE3A00F27B2D /* ChartsTableView */,
-				29DAF3ED2238CBFC003376A9 /* Controls */,
 				297CA7C32237A28000F27B2D /* AppDelegate.swift */,
 				297CA7C52237A28000F27B2D /* ViewController.swift */,
 				29DAF3E72238BD44003376A9 /* chart_data.json */,
-				29DAF3F3223949CE003376A9 /* Drawer.swift */,
+				29DAF3F3223949CE003376A9 /* CGContext+Drawer.swift */,
 			);
 			path = st_telegram_contests;
 			sourceTree = "<group>";
@@ -93,20 +94,14 @@
 			isa = PBXGroup;
 			children = (
 				297CA7D92237F86F00F27B2D /* ChartsTableView.swift */,
-				297CA7E422380DFA00F27B2D /* HeaderView.swift */,
-				297CA7DC2237FE4C00F27B2D /* Cells */,
-			);
-			path = ChartsTableView;
-			sourceTree = "<group>";
-		};
-		297CA7DC2237FE4C00F27B2D /* Cells */ = {
-			isa = PBXGroup;
-			children = (
 				297CA7E12237FE8C00F27B2D /* ChartTableViewCell.swift */,
+				29DAF3EE2238CC1A003376A9 /* ChartRangeSelector.swift */,
+				297D686A223AA3200085253A /* ChartLayer.swift */,
+				297CA7E422380DFA00F27B2D /* HeaderView.swift */,
 				297CA7DF2237FE8400F27B2D /* LineTableViewCell.swift */,
 				297CA7DD2237FE6300F27B2D /* ButtonTableViewCell.swift */,
 			);
-			path = Cells;
+			path = ChartsTableView;
 			sourceTree = "<group>";
 		};
 		29DAF3E92238BD53003376A9 /* Theme */ = {
@@ -126,14 +121,6 @@
 				297CA7CF2237A28200F27B2D /* Info.plist */,
 			);
 			path = Supports;
-			sourceTree = "<group>";
-		};
-		29DAF3ED2238CBFC003376A9 /* Controls */ = {
-			isa = PBXGroup;
-			children = (
-				29DAF3EE2238CC1A003376A9 /* ChartRangeSelector.swift */,
-			);
-			path = Controls;
 			sourceTree = "<group>";
 		};
 		29DAF3F022392DA5003376A9 /* Models */ = {
@@ -221,13 +208,14 @@
 				297CA7E22237FE8C00F27B2D /* ChartTableViewCell.swift in Sources */,
 				297CA7E522380DFA00F27B2D /* HeaderView.swift in Sources */,
 				297CA7D82237CCC400F27B2D /* UIColor+Ex.swift in Sources */,
-				29DAF3F4223949CE003376A9 /* Drawer.swift in Sources */,
+				29DAF3F4223949CE003376A9 /* CGContext+Drawer.swift in Sources */,
 				297CA7C62237A28000F27B2D /* ViewController.swift in Sources */,
 				29DAF3EC2238BE15003376A9 /* Chart.swift in Sources */,
 				297CA7D62237A4B400F27B2D /* Themes.swift in Sources */,
 				297CA7E02237FE8400F27B2D /* LineTableViewCell.swift in Sources */,
 				297CA7DE2237FE6300F27B2D /* ButtonTableViewCell.swift in Sources */,
 				297CA7DA2237F86F00F27B2D /* ChartsTableView.swift in Sources */,
+				297D686B223AA3200085253A /* ChartLayer.swift in Sources */,
 				297CA7C42237A28000F27B2D /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -366,14 +354,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = VRPS5BXS27;
 				INFOPLIST_FILE = st_telegram_contests/Supports/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.telegram.st-telegram-contests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.feedback.contests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -383,14 +374,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = VRPS5BXS27;
 				INFOPLIST_FILE = st_telegram_contests/Supports/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.telegram.st-telegram-contests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.feedback.contests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -406,7 +400,7 @@
 				297CA7D12237A28200F27B2D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		297CA7D22237A28200F27B2D /* Build configuration list for PBXNativeTarget "st_telegram_contests" */ = {
 			isa = XCConfigurationList;
@@ -415,7 +409,7 @@
 				297CA7D42237A28200F27B2D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};

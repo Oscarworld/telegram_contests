@@ -9,7 +9,7 @@
 import UIKit
 
 struct Chart: Decodable {
-    var x: [Int] = []
+    var x: [Date] = []
     var graphs: [Graph] = []
     var lowerValue: CGFloat = 0.6
     var upperValue: CGFloat = 1.0
@@ -36,7 +36,7 @@ struct Chart: Decodable {
             }
             
             if key == ColumnType.x.rawValue {
-                self.x = items.map { Int($0) }
+                self.x = items.map { Date(timeIntervalSince1970: TimeInterval(Int($0))) }
             } else {
                 guard let color = colors[key],
                     let name = names[key],
