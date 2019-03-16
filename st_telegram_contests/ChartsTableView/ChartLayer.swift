@@ -30,7 +30,6 @@ class ChatLayer: CALayer {
     }
     
     override func draw(in ctx: CGContext) {
-        let time1 = CACurrentMediaTime()
         ctx.drawChart(chart,
                       frame: frame,
                       lineWidth: lineWidth,
@@ -39,6 +38,5 @@ class ChatLayer: CALayer {
                       upperValue: chart.upperValue,
                       needDrawCoordinates: needDrawCoordinates,
                       percentStretchingYAxis: percentStretchingYAxis)
-         let time2 = CACurrentMediaTime()
     }
 }

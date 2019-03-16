@@ -92,11 +92,7 @@ extension CGContext {
             setStrokeColor(graph.color.cgColor)
             setLineWidth(lineWidth)
             
-            move(to: point(column, 0))
-            
-            for i in 1..<column.count {
-                addLine(to: point(column, i))
-            }
+            addLines(between: (0..<column.count).map{ point(column, $0) })
             
             drawPath(using: .stroke)
         }
@@ -112,56 +108,59 @@ extension CGContext {
         xAxisColor: UIColor,
         yAxisColor: UIColor,
         xAxisValues: [Date],
+        numberSegmentXAxis: Int = 6,
+        numberSegmentYAxis: Int = 6,
         minY: CGFloat,
         maxY: CGFloat,
-        countStep: CGFloat = 6.0,
         insets: UIEdgeInsets,
         spaceBetweenAxes: CGFloat
     ) {
-        guard let lowerXAxisValue = xAxisValues.first, let upperXAxisValue = xAxisValues.last else {
-            return
-        }
+        let numberSegmentXAxis = min(numberSegmentXAxis, xAxisValues.count)
+        let xAxisSegmentIndexWidth = xAxisValues.count / numberSegmentXAxis
         
-        saveGState()
+        let xAxisSegmentWidth = (frame.width - insets.left - insets.right) / CGFloat(numberSegmentXAxis)
+        let yAxisSegmentWidth = (frame.height - insets.top - insets.bottom - xAxisFont.lineHeight * 2 - spaceBetweenAxes) / CGFloat(numberSegmentYAxis - 1)
         
-        let xAxisStep = (frame.width - insets.left - insets.right) / countStep
-        let yAxisStep = (frame.height - insets.top - insets.bottom - xAxisFont.lineHeight * 2 - spaceBetweenAxes) / (countStep - 1)
-        
-        //TODO: replace x and y
-        let x = (lowerXAxisValue.timeIntervalSince1970 - upperXAxisValue.timeIntervalSince1970) / Double(countStep)
-        let y = (maxY - minY) / countStep
+        //TODO: replace y
+        let y = (maxY - minY) / CGFloat(numberSegmentYAxis)
         
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM dd"
         
-        let xAxisOffset = (xAxisStep - "May 31".boundingRect(font: xAxisFont).width) * 0.5
+        let xAxisOffset = (xAxisSegmentWidth - "MMM dd".boundingRect(font: xAxisFont).width) * 0.5
         
-        for i in 0..<Int(countStep) {
-            let _x = Date(timeIntervalSince1970: lowerXAxisValue.timeIntervalSince1970 + Double(i) * x)
-            let _y = Int(minY + CGFloat(i) * y)
-            
-            let lineY = frame.height - insets.bottom - xAxisFont.lineHeight - spaceBetweenAxes - yAxisStep * CGFloat(i)
-            
-            drawLine(fromPoint: CGPoint(x: 0, y: lineY),
-                     toPoint: CGPoint(x: frame.width, y: lineY),
-                     color: axisColor.withAlphaComponent(1.0 - CGFloat(i) * 0.1).cgColor,
-                     lineWidth: 1.2)
+        saveGState()
+        
+        for i in 0..<numberSegmentXAxis {
+            let index = i * xAxisSegmentIndexWidth
+            let value = xAxisValues[index]
             
             drawText(
-                text: "\(formatter.string(from: _x))",
+                text: "\(formatter.string(from: value))",
                 font: xAxisFont,
                 color: xAxisColor,
                 frame: frame,
-                x: insets.left + xAxisStep * CGFloat(i) + xAxisOffset,
+                x: insets.left + xAxisSegmentWidth * CGFloat(i) + xAxisOffset,
                 y: insets.bottom)
+        }
+        
+        for i in 0..<numberSegmentYAxis {
+            let linePosition = frame.height - insets.bottom - xAxisFont.lineHeight - spaceBetweenAxes - yAxisSegmentWidth * CGFloat(i)
+            
+            drawLine(fromPoint: CGPoint(x: 0, y: linePosition),
+                     toPoint: CGPoint(x: frame.width, y: linePosition),
+                     color: axisColor.withAlphaComponent(1.0 - CGFloat(i) * 0.1).cgColor,
+                     lineWidth: 1.2)
+            
+            let value = Int(minY + CGFloat(i) * y)
             
             drawText(
-                text: "\(_y)",
+                text: "\(value)",
                 font: xAxisFont,
                 color: yAxisColor,
                 frame: frame,
                 x: insets.left,
-                y: insets.bottom + xAxisFont.lineHeight + yAxisStep * CGFloat(i) + spaceBetweenAxes)
+                y: insets.bottom + xAxisFont.lineHeight + yAxisSegmentWidth * CGFloat(i) + spaceBetweenAxes)
         }
         
         restoreGState()

@@ -152,10 +152,14 @@ extension ChartsTableView: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if indexPath.section != charts.count, indexPath.row == 0 {
-            return tableView.bounds.width
+            return tableView.frame.width
         } else {
             return 50
         }
+    }
+    
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return .leastNormalMagnitude
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
@@ -166,7 +170,23 @@ extension ChartsTableView: UITableViewDelegate {
         }
     }
     
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        if indexPath.section != charts.count, indexPath.row == 0 {
+            return tableView.frame.width
+        } else {
+            return 50
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, estimatedHeightForHeaderInSection section: Int) -> CGFloat {
+        if section == charts.count {
+            return 40
+        } else {
+            return 60
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
         return .leastNormalMagnitude
     }
 }
