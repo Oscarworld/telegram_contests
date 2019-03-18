@@ -132,7 +132,6 @@ class DefenitionPointLayer: CALayer {
     }
     
     override func draw(in ctx: CGContext) {
-        print("definition")
         ctx.drawDefinition(chart: chart,
                            frame: frame,
                            pointSize: pointSize,

@@ -20,7 +20,43 @@ extension CGContext {
             return
         }
         
-        drawGraps(chart: chart, frame: frame, insets: .zero, lineWidth: lineWidth)
+        let width = frame.width
+        let height = frame.height
+        
+        let stepXAxis = width / CGFloat(chart.x.count - 1)
+        
+        let visibleGraphs: [Graph] = chart.graphs.filter { !$0.isHidden }
+        let yAxisValues = visibleGraphs.flatMap{ $0.column }
+        
+        let yAxisMin = yAxisValues.min() ?? 0
+        let yAxisMax = yAxisValues.max() ?? 0
+        
+        let rangeYAxis = yAxisMax - yAxisMin
+        
+        saveGState()
+        
+        for graph in visibleGraphs {
+            setStrokeColor(graph.color.cgColor)
+            setLineWidth(lineWidth)
+            setLineJoin(.round)
+            setLineCap(.round)
+            
+            let points = (0..<graph.column.count).map{
+                getPoint(at: $0,
+                         column: graph.column,
+                         insets: .zero,
+                         stepXAxis: stepXAxis,
+                         height: height,
+                         yAxisMax: yAxisMax,
+                         stretchRangeYAxis: rangeYAxis)
+            }
+            
+            addLines(between: points)
+            
+            drawPath(using: .stroke)
+        }
+        
+        restoreGState()
     }
     
     func drawChart(
@@ -42,7 +78,7 @@ extension CGContext {
                         insets: chart.insets,
                         spaceBetweenAxes: chart.spaceBetweenAxes)
         
-        drawGraps(chart: chart,
+        drawGraphs(chart: chart,
                   frame: frame,
                   insets: chart.insetsWithAxes,
                   lineWidth: lineWidth)
@@ -123,7 +159,7 @@ extension CGContext {
         restoreGState()
     }
     
-    func drawGraps(chart: OptimizedChart,
+    func drawGraphs(chart: OptimizedChart,
                    frame: CGRect,
                    insets: UIEdgeInsets,
                    lineWidth: CGFloat

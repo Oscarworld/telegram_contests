@@ -26,7 +26,6 @@ class ChartValuesDefinitionControl: UIControl {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        print("add layers")
         layer.addSublayer(definitionLayer)
     }
     

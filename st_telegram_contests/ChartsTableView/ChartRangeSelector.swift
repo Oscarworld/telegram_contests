@@ -30,14 +30,16 @@ class ChartRangeControl: UIControl {
     lazy var leftBackgroundLayer: CALayer = {
         var layer = CALayer()
         layer.contentsScale = UIScreen.main.scale
-        layer.drawsAsynchronously = true
+        layer.rasterizationScale = layer.contentsScale
+        layer.shouldRasterize = true
         return layer
     }()
     
     lazy var rightBackgroundLayer: CALayer = {
         var layer = CALayer()
         layer.contentsScale = UIScreen.main.scale
-        layer.drawsAsynchronously = true
+        layer.rasterizationScale = layer.contentsScale
+        layer.shouldRasterize = true
         return layer
     }()
     
@@ -46,10 +48,11 @@ class ChartRangeControl: UIControl {
         layer.rangeSelector = self
         layer.isLowerThumb = true
         layer.contentsScale = UIScreen.main.scale
+        layer.rasterizationScale = layer.contentsScale
         layer.cornerRadius = 3.0
         layer.masksToBounds = true
         layer.maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner]
-        layer.drawsAsynchronously = true
+        layer.shouldRasterize = true
         return layer
     }()
     
@@ -58,30 +61,32 @@ class ChartRangeControl: UIControl {
         layer.rangeSelector = self
         layer.isLowerThumb = false
         layer.contentsScale = UIScreen.main.scale
+        layer.rasterizationScale = layer.contentsScale
         layer.cornerRadius = 3.0
         layer.masksToBounds = true
         layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
-        layer.drawsAsynchronously = true
+        layer.shouldRasterize = true
         return layer
     }()
     
     lazy var topBorderLayer: CALayer = {
         var layer = CALayer()
         layer.contentsScale = UIScreen.main.scale
-        layer.drawsAsynchronously = true
+        layer.rasterizationScale = layer.contentsScale
+        layer.shouldRasterize = true
         return layer
     }()
     
     lazy var bottomBorderLayer: CALayer = {
         var layer = CALayer()
         layer.contentsScale = UIScreen.main.scale
-        layer.drawsAsynchronously = true
+        layer.rasterizationScale = layer.contentsScale
+        layer.shouldRasterize = true
         return layer
     }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        print("add layers")
         layer.addSublayer(chartLayer)
         layer.addSublayer(leftBackgroundLayer)
         layer.addSublayer(rightBackgroundLayer)
@@ -139,11 +144,11 @@ extension ChartRangeControl {
         previousLocation = touch.location(in: self)
         
         let lowerRect = CGRect(x: lowerThumbLayer.frame.minX - 20, y: lowerThumbLayer.frame.minY,
-                               width: lowerThumbLayer.frame.width + 20, height: lowerThumbLayer.frame.height)
-        let upperRect = CGRect(x: upperThumbLayer.frame.minX, y: upperThumbLayer.frame.minY,
-                               width: upperThumbLayer.frame.width + 20, height: upperThumbLayer.frame.height)
-        let midRect = CGRect(x: lowerThumbLayer.frame.maxX, y: lowerThumbLayer.frame.minY,
-                             width: upperThumbLayer.frame.minX - lowerThumbLayer.frame.maxX, height: lowerThumbLayer.frame.height)
+                               width: lowerThumbLayer.frame.width + 30, height: lowerThumbLayer.frame.height)
+        let upperRect = CGRect(x: upperThumbLayer.frame.minX - 10, y: upperThumbLayer.frame.minY,
+                               width: upperThumbLayer.frame.width + 30, height: upperThumbLayer.frame.height)
+        let midRect = CGRect(x: lowerThumbLayer.frame.maxX + 10, y: lowerThumbLayer.frame.minY,
+                             width: upperThumbLayer.frame.minX - 10.0 - lowerThumbLayer.frame.maxX - 10.0, height: lowerThumbLayer.frame.height)
         
         if lowerRect.contains(previousLocation) {
             lowerThumbLayer.highlighted = true
