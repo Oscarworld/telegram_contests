@@ -8,57 +8,9 @@
 
 import UIKit
 
-class RangeSliderThumbLayer: CALayer {
-    static let thumbWidth: CGFloat = 15.0
+class ChartRangeControl: UIControl {
     
-    var highlighted = false
-    var isLowerThumb = true
-    weak var rangeSelector: ChartRangeSelector?
-    
-    override init(layer: Any) {
-        super.init(layer: layer)
-    }
-    
-    override init() {
-        super.init()
-        contentsScale = UIScreen.main.scale
-        cornerRadius = 3.0
-        masksToBounds = true
-        maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner]
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override func draw(in ctx: CGContext) {
-        let thumbWidth = RangeSliderThumbLayer.thumbWidth
-        
-        if isLowerThumb {
-            ctx.drawLine(
-                fromPoint: CGPoint(x: thumbWidth / 2 + 3, y: bounds.height / 2 - 7),
-                toPoint: CGPoint(x: thumbWidth / 2 - 3, y: bounds.height / 2),
-                color: UIColor.white.cgColor, lineWidth: 1.0)
-            ctx.drawLine(
-                fromPoint: CGPoint(x: thumbWidth / 2 - 3, y: bounds.height / 2),
-                toPoint: CGPoint(x: thumbWidth / 2 + 3, y: bounds.height / 2 + 7),
-                color: UIColor.white.cgColor, lineWidth: 1.0)
-        } else {
-            ctx.drawLine(
-                fromPoint: CGPoint(x: thumbWidth / 2 - 3, y: bounds.height / 2 - 7),
-                toPoint: CGPoint(x: thumbWidth / 2 + 3, y: bounds.height / 2),
-                color: UIColor.white.cgColor, lineWidth: 1.0)
-            ctx.drawLine(
-                fromPoint: CGPoint(x: thumbWidth / 2 + 3, y: bounds.height / 2),
-                toPoint: CGPoint(x: thumbWidth / 2 - 3, y: bounds.height / 2 + 7),
-                color: UIColor.white.cgColor, lineWidth: 1.0)
-        }
-    }
-}
-
-class ChartRangeSelector: UIControl {
-    
-    var chart: Chart!
+    var chart: OptimizedChart!
     
     var lowerValue: CGFloat!
     var upperValue: CGFloat!
@@ -67,12 +19,10 @@ class ChartRangeSelector: UIControl {
     
     var thumbWidth: CGFloat = RangeSliderThumbLayer.thumbWidth
     
-    lazy var chartLayer: ChatLayer = {
-        var layer = ChatLayer()
+    lazy var chartLayer: PlainChatLayer = {
+        var layer = PlainChatLayer()
         layer.contentsScale = UIScreen.main.scale
-        layer.insets = .zero
         layer.lineWidth = 1.0
-        layer.percentStretchingYAxis = 0.05
         layer.drawsAsynchronously = true
         return layer
     }()
@@ -131,6 +81,7 @@ class ChartRangeSelector: UIControl {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        print("add layers")
         layer.addSublayer(chartLayer)
         layer.addSublayer(leftBackgroundLayer)
         layer.addSublayer(rightBackgroundLayer)
@@ -163,7 +114,6 @@ class ChartRangeSelector: UIControl {
     func updateTheme() {
         let mainColor = Theme.shared.mainColor
         let controlColor = Theme.shared.controlColor.cgColor
-        alpha = 1.0
         backgroundColor = mainColor
         chartLayer.backgroundColor = mainColor.cgColor
         lowerThumbLayer.backgroundColor = controlColor
@@ -174,7 +124,7 @@ class ChartRangeSelector: UIControl {
         rightBackgroundLayer.backgroundColor = Theme.shared.backgroundTrackColor.cgColor
     }
     
-    func configure(chart: Chart) {
+    func configure(chart: OptimizedChart) {
         self.chart = chart
         self.lowerValue = chart.lowerValue
         self.upperValue = chart.upperValue
@@ -184,7 +134,7 @@ class ChartRangeSelector: UIControl {
 
 
 // MARK: Handler
-extension ChartRangeSelector {
+extension ChartRangeControl {
     override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
         previousLocation = touch.location(in: self)
         
@@ -216,7 +166,7 @@ extension ChartRangeSelector {
         let location = touch.location(in: self)
         
         let deltaLocation = CGFloat(location.x - previousLocation.x)
-        let deltaValue = deltaLocation / (bounds.width - thumbWidth)
+        var deltaValue = deltaLocation / (bounds.width - thumbWidth)
         
         let oldLoweValue = lowerValue
         let oldUperValue = upperValue
@@ -225,6 +175,12 @@ extension ChartRangeSelector {
         
         if lowerThumbLayer.highlighted && upperThumbLayer.highlighted {
             if (deltaValue > 0 && upperValue != 1.0) || (deltaValue < 0 && lowerValue != 0.0) {
+                if lowerValue + deltaValue < 0 {
+                    deltaValue = -lowerValue
+                }
+                if upperValue + deltaValue > 1 {
+                    deltaValue = 1.0 - upperValue
+                }
                 lowerValue += deltaValue
                 upperValue += deltaValue
                 lowerValue = boundValue(value: lowerValue, toLowerValue: 0.0, upperValue: upperValue - 0.2)
@@ -266,7 +222,7 @@ extension ChartRangeSelector {
     }
 }
 
-extension ChartRangeSelector {
+extension ChartRangeControl {
     func drawMainLayer() {
         chartLayer.frame = CGRect(x: 0.0, y: 3.0,
                                   width: bounds.width, height: bounds.height - 6)

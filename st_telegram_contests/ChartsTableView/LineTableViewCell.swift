@@ -22,7 +22,6 @@ class LineTableViewCell: UITableViewCell {
     
     lazy var rectView: UIView = {
         var view = UIView()
-        view.alpha = 1.0
         view.translatesAutoresizingMaskIntoConstraints = false
         view.layer.masksToBounds = true
         view.layer.cornerRadius = 5
@@ -31,14 +30,12 @@ class LineTableViewCell: UITableViewCell {
     
     lazy var bottomView: UIView = {
         var view = UIView()
-        view.alpha = 1.0
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
     lazy var titleLabel: UILabel = {
         var label = UILabel()
-        label.alpha = 1.0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -72,7 +69,6 @@ class LineTableViewCell: UITableViewCell {
     }
     
     func updateTheme() {
-        alpha = 1.0
         titleLabel.textColor = Theme.shared.mainTextColor
         titleLabel.backgroundColor = Theme.shared.mainColor
         backgroundColor = Theme.shared.mainColor

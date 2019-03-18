@@ -10,32 +10,39 @@ import UIKit
 
 class ChartTableViewCell: UITableViewCell {
     
-    var chart: Chart!
+    var chart: OptimizedChart!
     var callback: ((CGFloat, CGFloat) -> Void)!
     
     lazy var chartLayer: ChatLayer = {
         var layer = ChatLayer()
         layer.contentsScale = UIScreen.main.scale
-        layer.insets = UIEdgeInsets(top: 0.0, left: 0.0, bottom: 0.0, right: 0)
         layer.lineWidth = 2.0
-        layer.needDrawCoordinates = true
         layer.drawsAsynchronously = true
         return layer
     }()
-    var chartSelector = ChartRangeSelector()
+    
+    lazy var chartSelector: ChartRangeControl = {
+        var selector = ChartRangeControl()
+        selector.addTarget(self,
+                           action: #selector(rangeSliderValueChanged(_:)),
+                           for: .valueChanged)
+        return selector
+    }()
+    
+    lazy var chartDefinitionControl: ChartValuesDefinitionControl = {
+        var control = ChartValuesDefinitionControl()
+        return control
+    }()
+    
     
     private var searchTimer: Timer?
     private let ratio: CGFloat = 0.15 // Ratio for chartLayer and chartSelector
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        alpha = 1.0
         layer.addSublayer(chartLayer)
         addSubview(chartSelector)
-        
-        chartSelector.addTarget(self,
-                                action: #selector(rangeSliderValueChanged(_:)),
-                                for: .valueChanged)
+        addSubview(chartDefinitionControl)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -45,12 +52,22 @@ class ChartTableViewCell: UITableViewCell {
     override func draw(_ rect: CGRect) {
         super.draw(rect)
         
-        chartLayer.frame = CGRect(x: 15.0, y: 15.0,
-                                  width: rect.width - 30, height: (rect.height - 30) * (1 - ratio))
-        chartSelector.frame = CGRect(x: 15.0, y: chartLayer.frame.maxY + 10.0,
-                                     width: rect.width - 30, height: (rect.height - 30) * ratio)
+        chartLayer.frame = CGRect(x: 15.0,
+                                  y: 15.0,
+                                  width: rect.width - 30,
+                                  height: (rect.height - 30) * (1 - ratio))
+        chartDefinitionControl.frame = CGRect(x: 15.0,
+                                              y: 15.0,
+                                              width: rect.width - 30,
+                                              height: (rect.height - 30) * (1 - ratio))
+        chartSelector.frame = CGRect(x: 15.0,
+                                     y: chartLayer.frame.maxY + 10.0,
+                                     width: rect.width - 30,
+                                     height: (rect.height - 30) * ratio)
+        
         chartLayer.setNeedsDisplay()
         chartSelector.setNeedsDisplay()
+        chartDefinitionControl.setNeedsDisplay()
     }
     
     func updateTheme() {
@@ -64,39 +81,40 @@ class ChartTableViewCell: UITableViewCell {
         CATransaction.commit()
     }
     
-    func configure(chart: Chart) {
+    func configure(chart: OptimizedChart) {
         self.chart = chart
         chartLayer.chart = chart
         chartSelector.configure(chart: chart)
+        chartDefinitionControl.configure(chart: chart)
         
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         
         chartLayer.setNeedsDisplay()
         chartSelector.setNeedsDisplay()
+        chartDefinitionControl.setNeedsDisplay()
         
         CATransaction.commit()
     }
     
-    @objc func rangeSliderValueChanged(_ rangeSlider: ChartRangeSelector) {
+    @objc func rangeSliderValueChanged(_ rangeSlider: ChartRangeControl) {
         if let searchTimer = searchTimer {
             searchTimer.invalidate()
         }
         
-        chart.lowerValue = rangeSlider.lowerValue
-        chart.upperValue = rangeSlider.upperValue
-        
         callback(rangeSlider.lowerValue, rangeSlider.upperValue)
-        
-        searchTimer = Timer.scheduledTimer(timeInterval: 0.01,
-                                           target: self,
-                                           selector: #selector(valueDidChange),
-                                           userInfo: nil,
-                                           repeats: false)
+        valueDidChange()
+//        searchTimer = Timer.scheduledTimer(timeInterval: 0.01,
+//                                           target: self,
+//                                           selector: #selector(valueDidChange),
+//                                           userInfo: nil,
+//                                           repeats: false)
     }
     
     @objc func valueDidChange() {
         chartLayer.chart = chart
+        chartDefinitionControl.configure(chart: chart)
         chartLayer.setNeedsDisplay()
+        chartDefinitionControl.setNeedsDisplay()
     }
 }

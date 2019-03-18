@@ -10,7 +10,7 @@ import UIKit
 
 class ChartsTableView: UITableView {
     
-    var charts: [Chart] = []
+    var charts: [OptimizedChart] = []
     
     private let cellButtonIdentifier = "cell_button"
     private let cellLineIdentifier = "cell_line"
@@ -68,8 +68,12 @@ extension ChartsTableView: UITableViewDataSource {
             cell.updateTheme()
             cell.configure(chart: charts[indexPath.section])
             cell.callback = { [weak self] lowerValue, upperValue in
-                self?.charts[indexPath.section].lowerValue = lowerValue
-                self?.charts[indexPath.section].upperValue = upperValue
+                guard let strongSelf = self else {
+                    return
+                }
+                
+                strongSelf.charts[indexPath.section].changeBoundaries(lowerValue: lowerValue, upperValue: upperValue)
+                cell.chart = strongSelf.charts[indexPath.section]
             }
             
             cell.setNeedsDisplay()
@@ -128,7 +132,7 @@ extension ChartsTableView: UITableViewDataSource {
 extension ChartsTableView: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if indexPath.section != charts.count, indexPath.row != 0 {
-            charts[indexPath.section].graphs[indexPath.row - 1].isHidden = false
+            charts[indexPath.section].showGraph(at: indexPath.row - 1)
             if let cell = tableView.cellForRow(at: indexPath) {
                 cell.isSelected = true
                 if let cell = tableView.cellForRow(at: IndexPath(row: 0, section: indexPath.section)) as? ChartTableViewCell {
@@ -140,7 +144,7 @@ extension ChartsTableView: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
         if indexPath.section != charts.count, indexPath.row != 0 {
-            charts[indexPath.section].graphs[indexPath.row - 1].isHidden = true
+            charts[indexPath.section].hideGraph(at: indexPath.row - 1)
             if let cell = tableView.cellForRow(at: indexPath) {
                 cell.isSelected = false
                 if let cell = tableView.cellForRow(at: IndexPath(row: 0, section: indexPath.section)) as? ChartTableViewCell {

@@ -11,7 +11,6 @@ import UIKit
 class HeaderView: UIView {
     lazy var titleLabel: UILabel = {
         var label = UILabel()
-        label.alpha = 1.0
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         return label
@@ -19,7 +18,6 @@ class HeaderView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        alpha = 1.0
         backgroundColor = Theme.shared.additionalColor
         titleLabel.backgroundColor = Theme.shared.additionalColor
         addSubview(titleLabel)

@@ -96,6 +96,15 @@ extension Theme {
         case .day:
             return UIColor(netHex: 0x989EA2)
         case .night:
+            return UIColor(netHex: 0x5B6B80)
+        }
+    }
+    
+    var definitionDateTextColor: UIColor {
+        switch mode {
+        case .day:
+            return UIColor(netHex: 0x000000)
+        case .night:
             return UIColor(netHex: 0x5D6D7E)
         }
     }

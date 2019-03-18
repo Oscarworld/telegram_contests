@@ -29,14 +29,15 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         do {
-            tableView.charts = try parseJson()
+            tableView.charts = (try parseJson()).map{ OptimizedChart(chart: $0) }
         } catch {
             fatalError("Can't parse json data")
         }
         
         navigationItem.title = "Statistics"
-        //navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.isTranslucent = false
         updateColors()
         
         view.addSubview(tableView)
