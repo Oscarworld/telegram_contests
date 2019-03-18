@@ -11,7 +11,8 @@ import UIKit
 class ChartTableViewCell: UITableViewCell {
     
     var chart: OptimizedChart!
-    var callback: ((CGFloat, CGFloat) -> Void)!
+    var rangeChanged: ((CGFloat, CGFloat) -> Void)!
+    var definitionChanged: ((CGFloat) -> Void)!
     
     lazy var chartLayer: ChatLayer = {
         var layer = ChatLayer()
@@ -21,16 +22,19 @@ class ChartTableViewCell: UITableViewCell {
         return layer
     }()
     
-    lazy var chartSelector: ChartRangeControl = {
-        var selector = ChartRangeControl()
-        selector.addTarget(self,
+    lazy var chartSelectorControl: ChartRangeControl = {
+        var control = ChartRangeControl()
+        control.addTarget(self,
                            action: #selector(rangeSliderValueChanged(_:)),
                            for: .valueChanged)
-        return selector
+        return control
     }()
     
     lazy var chartDefinitionControl: ChartValuesDefinitionControl = {
         var control = ChartValuesDefinitionControl()
+        control.addTarget(self,
+                           action: #selector(rangeDefinitionValueChanged(_:)),
+                           for: .valueChanged)
         return control
     }()
     
@@ -41,7 +45,7 @@ class ChartTableViewCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         layer.addSublayer(chartLayer)
-        addSubview(chartSelector)
+        addSubview(chartSelectorControl)
         addSubview(chartDefinitionControl)
     }
     
@@ -60,13 +64,13 @@ class ChartTableViewCell: UITableViewCell {
                                               y: 15.0,
                                               width: rect.width - 30,
                                               height: (rect.height - 30) * (1 - ratio))
-        chartSelector.frame = CGRect(x: 15.0,
+        chartSelectorControl.frame = CGRect(x: 15.0,
                                      y: chartLayer.frame.maxY + 10.0,
                                      width: rect.width - 30,
                                      height: (rect.height - 30) * ratio)
         
         chartLayer.setNeedsDisplay()
-        chartSelector.setNeedsDisplay()
+        chartSelectorControl.setNeedsDisplay()
         chartDefinitionControl.setNeedsDisplay()
     }
     
@@ -76,7 +80,7 @@ class ChartTableViewCell: UITableViewCell {
         
         backgroundColor = Theme.shared.mainColor
         chartLayer.backgroundColor = Theme.shared.mainColor.cgColor
-        chartSelector.updateTheme()
+        chartSelectorControl.updateTheme()
         
         CATransaction.commit()
     }
@@ -84,14 +88,14 @@ class ChartTableViewCell: UITableViewCell {
     func configure(chart: OptimizedChart) {
         self.chart = chart
         chartLayer.chart = chart
-        chartSelector.configure(chart: chart)
+        chartSelectorControl.configure(chart: chart)
         chartDefinitionControl.configure(chart: chart)
         
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         
         chartLayer.setNeedsDisplay()
-        chartSelector.setNeedsDisplay()
+        chartSelectorControl.setNeedsDisplay()
         chartDefinitionControl.setNeedsDisplay()
         
         CATransaction.commit()
@@ -102,8 +106,8 @@ class ChartTableViewCell: UITableViewCell {
             searchTimer.invalidate()
         }
         
-        callback(rangeSlider.lowerValue, rangeSlider.upperValue)
-        valueDidChange()
+        rangeChanged(rangeSlider.lowerValue, rangeSlider.upperValue)
+        rangeDidChange()
 //        searchTimer = Timer.scheduledTimer(timeInterval: 0.01,
 //                                           target: self,
 //                                           selector: #selector(valueDidChange),
@@ -111,10 +115,19 @@ class ChartTableViewCell: UITableViewCell {
 //                                           repeats: false)
     }
     
-    @objc func valueDidChange() {
+    @objc func rangeDefinitionValueChanged(_ control: ChartValuesDefinitionControl) {
+        definitionChanged(control.definitionValuePoint)
+        definitionDidChange()
+    }
+    
+    @objc func rangeDidChange() {
         chartLayer.chart = chart
         chartDefinitionControl.configure(chart: chart)
         chartLayer.setNeedsDisplay()
         chartDefinitionControl.setNeedsDisplay()
+    }
+    
+    @objc func definitionDidChange() {
+        chartLayer.chart = chart
     }
 }

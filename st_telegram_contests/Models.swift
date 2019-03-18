@@ -124,9 +124,12 @@ struct OptimizedChart {
         let xAxisValues = Array(x[lowerXAxis..<upperXAxis])
         let yAxisValues = visibleGraphs.flatMap{ $0.column }
         
-        guard xAxisValues.count > 1, let minYAxisValue = yAxisValues.min(), let maxYAxisValue = yAxisValues.max() else {
+        guard xAxisValues.count > 1 else {
             return
         }
+        
+        let minYAxisValue = yAxisValues.min() ?? 0
+        let maxYAxisValue = yAxisValues.max() ?? 0
         
         let yAxisRange = getYAxisRange(minValue: minYAxisValue, maxValue: maxYAxisValue, stretching: stretchingYAxis)
         

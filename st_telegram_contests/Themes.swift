@@ -103,9 +103,9 @@ extension Theme {
     var definitionDateTextColor: UIColor {
         switch mode {
         case .day:
-            return UIColor(netHex: 0x000000)
+            return UIColor(netHex: 0x68686D)
         case .night:
-            return UIColor(netHex: 0x5D6D7E)
+            return UIColor(netHex: 0xFFFFFF)
         }
     }
     

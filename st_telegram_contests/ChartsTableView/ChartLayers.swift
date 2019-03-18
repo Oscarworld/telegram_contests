@@ -111,6 +111,14 @@ class DefenitionPointLayer: CALayer {
     var pointSize = CGSize(width: 7, height: 7)
     var lineWidth: CGFloat = 2.0
     
+    var valueFont = UIFont.systemFont(ofSize: 12.0, weight: .medium)
+    var monthDayFont = UIFont.systemFont(ofSize: 12.0, weight: .medium)
+    var yearFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
+    
+    var rectInsets = UIEdgeInsets(top: 7.0, left: 7.0, bottom: 7.0, right: 7.0)
+    var insetColumn: CGFloat = 15.0
+    var insetRow: CGFloat = 5.0
+    
     override init(layer: Any) {
         super.init(layer: layer)
     }
@@ -124,9 +132,16 @@ class DefenitionPointLayer: CALayer {
     }
     
     override func draw(in ctx: CGContext) {
+        print("definition")
         ctx.drawDefinition(chart: chart,
                            frame: frame,
                            pointSize: pointSize,
-                           lineWidth: lineWidth)
+                           lineWidth: lineWidth,
+                           valueFont: valueFont,
+                           monthDayFont: monthDayFont,
+                           yearFont: yearFont,
+                           rectInsets: rectInsets,
+                           insetColumn: insetColumn,
+                           insetRow: insetRow)
     }
 }

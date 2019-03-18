@@ -67,12 +67,20 @@ extension ChartsTableView: UITableViewDataSource {
             
             cell.updateTheme()
             cell.configure(chart: charts[indexPath.section])
-            cell.callback = { [weak self] lowerValue, upperValue in
+            cell.rangeChanged = { [weak self] lowerValue, upperValue in
                 guard let strongSelf = self else {
                     return
                 }
                 
                 strongSelf.charts[indexPath.section].changeBoundaries(lowerValue: lowerValue, upperValue: upperValue)
+                cell.chart = strongSelf.charts[indexPath.section]
+            }
+            cell.definitionChanged = { [weak self] value in
+                guard let strongSelf = self else {
+                    return
+                }
+                
+                strongSelf.charts[indexPath.section].definitionValuePoint = value
                 cell.chart = strongSelf.charts[indexPath.section]
             }
             

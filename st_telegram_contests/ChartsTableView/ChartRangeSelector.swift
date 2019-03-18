@@ -139,9 +139,9 @@ extension ChartRangeControl {
         previousLocation = touch.location(in: self)
         
         let lowerRect = CGRect(x: lowerThumbLayer.frame.minX - 20, y: lowerThumbLayer.frame.minY,
-                               width: lowerThumbLayer.frame.width + 40, height: lowerThumbLayer.frame.height)
-        let upperRect = CGRect(x: upperThumbLayer.frame.minX - 20, y: upperThumbLayer.frame.minY,
-                               width: upperThumbLayer.frame.width + 40, height: upperThumbLayer.frame.height)
+                               width: lowerThumbLayer.frame.width + 20, height: lowerThumbLayer.frame.height)
+        let upperRect = CGRect(x: upperThumbLayer.frame.minX, y: upperThumbLayer.frame.minY,
+                               width: upperThumbLayer.frame.width + 20, height: upperThumbLayer.frame.height)
         let midRect = CGRect(x: lowerThumbLayer.frame.maxX, y: lowerThumbLayer.frame.minY,
                              width: upperThumbLayer.frame.minX - lowerThumbLayer.frame.maxX, height: lowerThumbLayer.frame.height)
         

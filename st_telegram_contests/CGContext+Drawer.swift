@@ -58,7 +58,7 @@ extension CGContext {
         yAxisColor: UIColor,
         xAxisValues: [Date],
         numberSegmentXAxis: Int = 4,
-        numberSegmentYAxis: Int = 6,
+        numberSegmentYAxis: Int = 5,
         minY: CGFloat,
         maxY: CGFloat,
         insets: UIEdgeInsets,
@@ -82,7 +82,7 @@ extension CGContext {
         let xAxisSegmentIndexWidth = CGFloat(chart.x.count - 1) / CGFloat(allNumberSegmentXAxis)
         
         let xAxisSegmentWidth = resizedWidth / CGFloat(allNumberSegmentXAxis)
-        let yAxisSegmentWidth = (frame.height - insets.top - insets.bottom - xAxisFont.lineHeight * 2 - spaceBetweenAxes) / CGFloat(numberSegmentYAxis - 1)
+        let yAxisSegmentWidth = (frame.height - insets.top - insets.bottom - xAxisFont.lineHeight * 2 - spaceBetweenAxes) / CGFloat(numberSegmentYAxis)
         
         //TODO: replace y
         let y = (maxY - minY) / CGFloat(numberSegmentYAxis)
@@ -101,7 +101,7 @@ extension CGContext {
                 y: insets.bottom)
         }
         
-        for i in 0..<numberSegmentYAxis {
+        for i in 0..<(numberSegmentYAxis + 1) {
             let linePosition = frame.height - insets.bottom - xAxisFont.lineHeight - spaceBetweenAxes - yAxisSegmentWidth * CGFloat(i)
             
             drawLine(fromPoint: CGPoint(x: 0, y: linePosition),
@@ -165,7 +165,13 @@ extension CGContext {
         chart: OptimizedChart,
         frame: CGRect,
         pointSize: CGSize,
-        lineWidth: CGFloat
+        lineWidth: CGFloat,
+        valueFont: UIFont,
+        monthDayFont: UIFont,
+        yearFont: UIFont,
+        rectInsets: UIEdgeInsets,
+        insetColumn: CGFloat,
+        insetRow: CGFloat
     ) {
         guard chart.xAxisValues.count > 1 else {
             return
@@ -177,50 +183,14 @@ extension CGContext {
         let stepXAxis = width / CGFloat(chart.xAxisValues.count - 1)
         let yAxisMax = chart.yAxisRange.max
         let stretchRangeYAxis = chart.yAxisRange.max - chart.yAxisRange.min
-        let indexPoint = Int(chart.definitionValuePoint * CGFloat(chart.xAxisValues.count))
-        
-        saveGState()
+        let indexPoint = Int(chart.definitionValuePoint * CGFloat(chart.xAxisValues.count - 1))
         
         let lineFromPoint = CGPoint(x: CGFloat(indexPoint) * stepXAxis, y: chart.insetsWithAxes.top)
         let lineToPoint = CGPoint(x: CGFloat(indexPoint) * stepXAxis, y: frame.height - chart.insetsWithAxes.bottom)
+        
+        saveGState()
+        
         drawLine(fromPoint: lineFromPoint, toPoint: lineToPoint, color: Theme.shared.axisColor.cgColor)
-        
-        
-        let mediumFont = UIFont.systemFont(ofSize: 14.0, weight: .medium)
-        let font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        
-        let values = chart.visibleGraphs.map { Int($0.column[indexPoint]) }
-        let countLine = max(2, chart.visibleGraphs.count)
-        
-        let rectInsets = UIEdgeInsets(top: 3.0, left: 5.0, bottom: 3.0, right: 5.0)
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM dd"
-        
-        let year = formatter.string(from: chart.xAxisValues[indexPoint])
-        formatter.dateFormat = "yyyy"
-        let month = formatter.string(from: chart.xAxisValues[indexPoint])
-        
-        let maxValuesWidth = values.map { "\($0)".boundingRect(font: mediumFont).width }.max()
-        
-        let maxWidth = max(year.boundingRect(font: mediumFont).width, month.boundingRect(font: font).width, maxValuesWidth ?? 0)
-        
-        let rectWidth = rectInsets.left + rectInsets.right + rectInsets.left + maxWidth
-        let rectHeight = rectInsets.top + rectInsets.bottom + CGFloat(countLine) * mediumFont.lineHeight + CGFloat(countLine - 1) * rectInsets.top
-        let rectPoint = CGPoint(x: max(min(lineFromPoint.x - rectWidth * 0.5, frame.width - rectWidth), 0),
-            y: 0)
-        let rect = CGRect(x: rectPoint.x,
-                          y: rectPoint.y,
-                          width: rectWidth,
-                          height: rectHeight)
-        
-        
-        setFillColor(Theme.shared.additionalColor.cgColor)
-        let path = UIBezierPath(roundedRect: rect, cornerRadius: 4.0).cgPath
-        addPath(path)
-        drawPath(using: .fill)
-        
-        drawText(text: year, font: mediumFont, color: Theme.shared.additionalTextColor, frame: frame, x: rectPoint.x + rectInsets.left, y: rectPoint.y + rectInsets.top)
-        drawText(text: month, font: font, color: Theme.shared.additionalTextColor, frame: frame, x: rectPoint.x + rectInsets.left, y: rectPoint.y + rectInsets.top + mediumFont.lineHeight + rectInsets.top)
         
         for graph in chart.visibleGraphs {
             setStrokeColor(graph.color.cgColor)
@@ -228,12 +198,12 @@ extension CGContext {
             setLineWidth(lineWidth)
             
             let point = getPoint(at: indexPoint,
-                                  column: graph.column,
-                                  insets: chart.insetsWithAxes,
-                                  stepXAxis: stepXAxis,
-                                  height: height,
-                                  yAxisMax: yAxisMax,
-                                  stretchRangeYAxis: stretchRangeYAxis)
+                                 column: graph.column,
+                                 insets: chart.insetsWithAxes,
+                                 stepXAxis: stepXAxis,
+                                 height: height,
+                                 yAxisMax: yAxisMax,
+                                 stretchRangeYAxis: stretchRangeYAxis)
             let pointRect = CGRect(x: point.x - pointSize.width * 0.5,
                                    y: point.y - pointSize.height * 0.5,
                                    width: pointSize.width,
@@ -243,8 +213,93 @@ extension CGContext {
             drawPath(using: .fillStroke)
         }
         
-        restoreGState()
+        drawValuesDefinition(frame: frame,
+                             graphs: chart.visibleGraphs.map { ("\(Int($0.column[indexPoint]))", $0.color) },
+                             date: chart.xAxisValues[indexPoint],
+                             index: indexPoint,
+                             lineX: lineFromPoint.x,
+                             insets: rectInsets,
+                             insetColumn: insetColumn,
+                             insetRow: insetRow,
+                             yearFont: yearFont,
+                             monthDayFont: monthDayFont,
+                             valueFont: valueFont)
         
+        restoreGState()
+    }
+    
+    func drawValuesDefinition(
+        frame: CGRect,
+        graphs: [(value: String, color: UIColor)],
+        date: Date,
+        index: Int,
+        lineX: CGFloat,
+        insets: UIEdgeInsets,
+        insetColumn: CGFloat,
+        insetRow: CGFloat,
+        yearFont: UIFont,
+        monthDayFont: UIFont,
+        valueFont: UIFont
+    ) {
+        let countLine = max(2, graphs.count)
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM dd"
+        
+        let monthDay = formatter.string(from: date)
+        
+        formatter.dateFormat = "yyyy"
+        let year = formatter.string(from: date)
+        
+        let firstColumnWidth = max(year.boundingRect(font: yearFont).width,
+                                   monthDay.boundingRect(font: monthDayFont).width)
+        let secondColumnWidth = graphs.map { $0.value.boundingRect(font: valueFont).width }.max() ?? 0
+        
+        let rectWidth = insets.left + firstColumnWidth + insetColumn + secondColumnWidth + insets.right
+        let rectHeight = insets.top + CGFloat(countLine) * valueFont.lineHeight + CGFloat(countLine - 1) * insetRow + insets.bottom
+        
+        let rectPoint = CGPoint(x: max(min(lineX - rectWidth * 0.5, frame.width - rectWidth), 0),
+                                y: 0)
+        
+        let rect = CGRect(origin: rectPoint, size: CGSize(width: rectWidth, height: rectHeight))
+        
+        let monthDayPoint = CGPoint(x: rectPoint.x + insets.left,
+                                    y: frame.height - (rectPoint.y + insets.top + monthDayFont.lineHeight))
+        
+        saveGState()
+        
+        setFillColor(Theme.shared.additionalColor.withAlphaComponent(0.9).cgColor)
+        let path = UIBezierPath(roundedRect: rect, cornerRadius: 4.0).cgPath
+        addPath(path)
+        drawPath(using: .fill)
+        
+        drawText(text: monthDay,
+                 font: monthDayFont,
+                 color: Theme.shared.definitionDateTextColor,
+                 frame: frame,
+                 x: monthDayPoint.x,
+                 y: monthDayPoint.y)
+        drawText(text: year,
+                 font: yearFont,
+                 color: Theme.shared.definitionDateTextColor,
+                 frame: frame,
+                 x: monthDayPoint.x,
+                 y: monthDayPoint.y - (insetRow + yearFont.lineHeight))
+        
+        for i in 0..<graphs.count {
+            let graph = graphs[i]
+            let valueWidth = graph.value.boundingRect(font: valueFont).width
+            let indent = secondColumnWidth - valueWidth
+            
+            drawText(text: graph.value,
+                     font: valueFont,
+                     color: graph.color,
+                     frame: frame,
+                     x: rectPoint.x + insets.left + firstColumnWidth + insetColumn + indent,
+                     y: frame.height - (rectPoint.y + insets.top) - valueFont.lineHeight - CGFloat(i) * (valueFont.lineHeight + insetRow))
+        }
+        
+        restoreGState()
     }
     
     func getPoint(at index: Int, column: [CGFloat], insets: UIEdgeInsets, stepXAxis: CGFloat, height: CGFloat, yAxisMax: CGFloat, stretchRangeYAxis: CGFloat) -> CGPoint {
@@ -316,7 +371,7 @@ extension String {
                       countLine: Int = 0) -> CGRect {
         let height: CGFloat = countLine == 0
             ? height
-            : (font.lineHeight * CGFloat(countLine)).rounded(.up)
+            : ceil(font.lineHeight * CGFloat(countLine))
         
         return NSString(string: self).boundingRect(with: CGSize(width: width, height: height),
                                                    options: options,
