@@ -93,7 +93,6 @@ extension CGContext {
         xAxisColor: UIColor,
         yAxisColor: UIColor,
         xAxisValues: [Date],
-        numberSegmentXAxis: Int = 4,
         numberSegmentYAxis: Int = 5,
         minY: CGFloat,
         maxY: CGFloat,
@@ -107,17 +106,14 @@ extension CGContext {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM dd"
         
-        let numberSegmentXAxis = min(numberSegmentXAxis, chart.x.count)
-        
         let lastValue = chart.x[chart.x.count - 1]
         let lastValueWidth = formatter.string(from: lastValue).boundingRect(font: xAxisFont).width
         
         let resizedWidth = (frame.width - insets.left - insets.right - lastValueWidth) / (chart.upperValue - chart.lowerValue)
-        let allNumberSegmentXAxis = Int((CGFloat(numberSegmentXAxis) / (chart.upperValue - chart.lowerValue)).rounded(.down))
         
-        let xAxisSegmentIndexWidth = CGFloat(chart.x.count - 1) / CGFloat(allNumberSegmentXAxis)
+        let xAxisSegmentIndexWidth = CGFloat(chart.x.count - 1) / CGFloat(chart.numberSegmentXAxis)
         
-        let xAxisSegmentWidth = resizedWidth / CGFloat(allNumberSegmentXAxis)
+        let xAxisSegmentWidth = resizedWidth / CGFloat(chart.numberSegmentXAxis)
         let yAxisSegmentWidth = (frame.height - insets.top - insets.bottom - xAxisFont.lineHeight * 2 - spaceBetweenAxes) / CGFloat(numberSegmentYAxis)
         
         //TODO: replace y
@@ -125,15 +121,21 @@ extension CGContext {
         
         saveGState()
         
-        for i in 0..<(allNumberSegmentXAxis + 1) {
+        for i in 0..<(chart.numberSegmentXAxis + 1) {
             let index = Int(CGFloat(i) * xAxisSegmentIndexWidth)
+            let text = formatter.string(from: chart.x[index])
+            let x = insets.left + xAxisSegmentWidth * CGFloat(i) - resizedWidth * chart.lowerValue
+            
+            if x < -text.boundingRect(font: xAxisFont).width || x > frame.width - insets.left - insets.right {
+                continue
+            }
             
             drawText(
-                text: formatter.string(from: chart.x[index]),
+                text: text,
                 font: xAxisFont,
                 color: xAxisColor,
                 frame: frame,
-                x: insets.left + xAxisSegmentWidth * CGFloat(i) - resizedWidth * chart.lowerValue,
+                x: x,
                 y: insets.bottom)
         }
         

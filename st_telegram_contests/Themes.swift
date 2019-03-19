@@ -10,7 +10,9 @@ import UIKit
 
 class Theme {
     static let shared = Theme()
-    private init() {}
+    private init() {
+        updateColors()
+    }
     
     private let themeModeKey = "ThemeModeKey"
     
@@ -21,6 +23,7 @@ class Theme {
     
     var mode: ThemeMode = (ThemeMode(rawValue: (UserDefaults.standard.value(forKey: "ThemeModeKey") as? Int) ?? 0) ?? .day) {
         didSet {
+            updateColors()
             UserDefaults.standard.setValue(mode.rawValue, forKey: "ThemeModeKey")
             NotificationCenter.default.post(name: .didSwitchTheme, object: nil)
         }
@@ -34,111 +37,54 @@ class Theme {
             mode = .day
         }
     }
-}
-
-extension Theme {
-    var barStyle: UIStatusBarStyle {
+    
+    private func updateColors() {
         switch mode {
         case .day:
-            return .default
+            barStyle = .default
+            mainColor = UIColor(netHex: 0xFEFEFE)
+            additionalColor = UIColor(netHex: 0xEFEFF4)
+            axisColor = UIColor(netHex: 0xE1E2E3)
+            mainTextColor = UIColor(netHex: 0x000000)
+            additionalTextColor = UIColor(netHex: 0x68686D)
+            axisTextColor = UIColor(netHex: 0x989EA2)
+            definitionDateTextColor = UIColor(netHex: 0x68686D)
+            controlColor = UIColor(netHex: 0xC9D4DF).withAlphaComponent(0.95)
+            backgroundTrackColor = UIColor(netHex: 0xF2F5F8).withAlphaComponent(0.75)
+            switchButtonText = "Switch to Night Mode"
         case .night:
-            return .lightContent
+            barStyle = .lightContent
+            mainColor = UIColor(netHex: 0x222F3F)
+            additionalColor = UIColor(netHex: 0x18222D)
+            axisColor = UIColor(netHex: 0x131B23)
+            mainTextColor = UIColor(netHex: 0xFFFFFF)
+            additionalTextColor = UIColor(netHex: 0x5B6B80)
+            axisTextColor = UIColor(netHex: 0x5B6B80)
+            definitionDateTextColor = UIColor(netHex: 0xFFFFFF)
+            controlColor = UIColor(netHex: 0x394859).withAlphaComponent(0.95)
+            backgroundTrackColor = UIColor(netHex: 0x1B293A).withAlphaComponent(0.75)
+            switchButtonText = "Switch to Day Mode"
         }
     }
     
-    var mainColor: UIColor {
-        switch mode {
-        case .day:
-            return UIColor(netHex: 0xFEFEFE)
-        case .night:
-            return UIColor(netHex: 0x222F3F)
-        }
-    }
+    lazy var barStyle: UIStatusBarStyle = .default
     
-    var additionalColor: UIColor {
-        switch mode {
-        case .day:
-            return UIColor(netHex: 0xEFEFF4)
-        case .night:
-            return UIColor(netHex: 0x18222D)
-        }
-    }
+    lazy var mainColor: UIColor = UIColor(netHex: 0xFEFEFE)
+    lazy var additionalColor: UIColor = UIColor(netHex: 0xEFEFF4)
     
-    var axisColor: UIColor {
-        switch mode {
-        case .day:
-            return UIColor(netHex: 0xE1E2E3)
-        case .night:
-            return UIColor(netHex: 0x131B23)
-        }
-    }
+    lazy var axisColor: UIColor = UIColor(netHex: 0xE1E2E3)
     
-    var mainTextColor: UIColor {
-        switch mode {
-        case .day:
-            return UIColor(netHex: 0x000000)
-        case .night:
-            return UIColor(netHex: 0xFFFFFF)
-        }
-    }
+    lazy var mainTextColor: UIColor = UIColor(netHex: 0x000000)
+    lazy var additionalTextColor: UIColor = UIColor(netHex: 0x68686D)
+    lazy var axisTextColor: UIColor = UIColor(netHex: 0x989EA2)
+    lazy var definitionDateTextColor: UIColor = UIColor(netHex: 0x68686D)
     
-    var additionalTextColor: UIColor {
-        switch mode {
-        case .day:
-            return UIColor(netHex: 0x68686D)
-        case .night:
-            return UIColor(netHex: 0x5B6B80)
-        }
-    }
+    lazy var controlColor: UIColor = UIColor(netHex: 0xC9D4DF).withAlphaComponent(0.95)
+    lazy var backgroundTrackColor: UIColor = UIColor(netHex: 0xF2F5F8).withAlphaComponent(0.75)
     
-    var axisTextColor: UIColor {
-        switch mode {
-        case .day:
-            return UIColor(netHex: 0x989EA2)
-        case .night:
-            return UIColor(netHex: 0x5B6B80)
-        }
-    }
+    lazy var buttonTextColor: UIColor = UIColor(netHex: 0x007AFF)
     
-    var definitionDateTextColor: UIColor {
-        switch mode {
-        case .day:
-            return UIColor(netHex: 0x68686D)
-        case .night:
-            return UIColor(netHex: 0xFFFFFF)
-        }
-    }
-    
-    var controlColor: UIColor {
-        switch mode {
-        case .day:
-            return UIColor(netHex: 0xC9D4DF).withAlphaComponent(0.95)
-        case .night:
-            return UIColor(netHex: 0x394859).withAlphaComponent(0.95)
-        }
-    }
-    
-    var backgroundTrackColor: UIColor {
-        switch mode {
-        case .day:
-            return UIColor(netHex: 0xF2F5F8).withAlphaComponent(0.75)
-        case .night:
-            return UIColor(netHex: 0x1B293A).withAlphaComponent(0.75)
-        }
-    }
-    
-    var buttonTextColor: UIColor {
-        return UIColor(netHex: 0x007AFF)
-    }
-    
-    var switchButtonText: String {
-        switch mode {
-        case .day:
-            return "Switch to Night Mode"
-        case .night:
-            return "Switch to Day Mode"
-        }
-    }
+    lazy var switchButtonText: String = "Switch to Night Mode"
 }
 
 extension Notification.Name {

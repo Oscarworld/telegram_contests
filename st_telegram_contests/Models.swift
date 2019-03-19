@@ -80,6 +80,10 @@ struct OptimizedChart {
     var yAxisRange: (min: CGFloat, max: CGFloat) = (0, 0)
     var visibleGraphs: [Graph] = []
     
+    var numberSegmentVisibleXAxis = 4
+    var numberSegmentXAxis: Int = 0
+    var needAnimation = false
+    
     init(chart: Chart) {
         self.x = chart.x
         self.graphs = chart.graphs
@@ -104,6 +108,8 @@ struct OptimizedChart {
     }
     
     private mutating func update() {
+        self.needAnimation = false
+        
         guard x.count > 1 else {
             return
         }
@@ -133,6 +139,17 @@ struct OptimizedChart {
         
         let yAxisRange = getYAxisRange(minValue: minYAxisValue, maxValue: maxYAxisValue, stretching: stretchingYAxis)
         
+        let numberSegmentVisibleXAxis = min(self.numberSegmentVisibleXAxis, x.count)
+        let allNumberSegmentXAxis = (CGFloat(numberSegmentVisibleXAxis) / (upperValue - lowerValue)).rounded(.down)
+        
+        let l2 = log2(allNumberSegmentXAxis).rounded(.down)
+        let val = Int(pow(2, l2))
+        
+        if self.numberSegmentXAxis != val {
+            self.needAnimation = true
+        }
+        
+        self.numberSegmentXAxis = val
         self.xAxisValues = xAxisValues
         self.yAxisRange = yAxisRange
         self.visibleGraphs = visibleGraphs

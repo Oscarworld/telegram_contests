@@ -38,8 +38,6 @@ class ChartTableViewCell: UITableViewCell {
         return control
     }()
     
-    
-    private var searchTimer: Timer?
     private let ratio: CGFloat = 0.15 // Ratio for chartLayer and chartSelector
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -102,17 +100,8 @@ class ChartTableViewCell: UITableViewCell {
     }
     
     @objc func rangeSliderValueChanged(_ rangeSlider: ChartRangeControl) {
-        if let searchTimer = searchTimer {
-            searchTimer.invalidate()
-        }
-        
         rangeChanged(rangeSlider.lowerValue, rangeSlider.upperValue)
         rangeDidChange()
-//        searchTimer = Timer.scheduledTimer(timeInterval: 0.01,
-//                                           target: self,
-//                                           selector: #selector(valueDidChange),
-//                                           userInfo: nil,
-//                                           repeats: false)
     }
     
     @objc func rangeDefinitionValueChanged(_ control: ChartValuesDefinitionControl) {
