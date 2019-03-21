@@ -62,8 +62,6 @@ extension CGContext {
             return
         }
         
-        var startTime = CFAbsoluteTimeGetCurrent()
-        
         drawCoordinates(frame: frame,
                         chart: chart,
                         xAxisFont: chart.xAxisFont, yAxisFont: chart.yAxisFont,
@@ -73,8 +71,6 @@ extension CGContext {
                         minY: chart.yAxisFrameRange.min, maxY: chart.yAxisFrameRange.max,
                         insets: chart.insets,
                         spaceBetweenAxes: chart.spaceBetweenAxes)
-        startTime = CFAbsoluteTimeGetCurrent()
-        
         
         drawGraphs(chart: chart,
                    frame: frame,
@@ -113,6 +109,7 @@ extension CGContext {
         saveGState()
         
         for i in 0..<(chart.numberSegmentXAxis + 1) {
+            let alpha = i % 2 == 0 ? 1.0 : chart.xAxisFontAlpha * 6
             let i = CGFloat(i)
             let index = Int(i * xAxisSegmentIndexWidth)
             let width = chart.xMonthDayWidth[index]
@@ -125,7 +122,7 @@ extension CGContext {
             drawText(
                 text: chart.xMonthDay[index],
                 font: xAxisFont,
-                color: xAxisColor,
+                color: xAxisColor.withAlphaComponent(alpha),
                 frame: frame,
                 x: x,
                 y: insets.bottom)
@@ -163,10 +160,9 @@ extension CGContext {
         let width = frame.width - insets.left - insets.right
         let height = frame.height - insets.top - insets.bottom
         
-        let lj = Int(chart.lowerXAxis * chart.smoothingFactor) % Int(chart.smoothingFactor)
-        let rj = Int(chart.upperXAxis * chart.smoothingFactor) % Int(chart.smoothingFactor)
+        let lj = chart.lj
         
-        let numberSegment = (chart.xAxisValues.count - 1) * Int(chart.smoothingFactor) + rj - lj
+        let numberSegment = chart.numberSegment
         
         let stepXAxis = width / CGFloat(numberSegment)
         let rangeYAxis = chart.yAxisFrameRange.max - chart.yAxisFrameRange.min
@@ -192,7 +188,7 @@ extension CGContext {
             
             move(to: point)
             
-            for i in 1..<Int(numberSegment) {
+            for i in 1..<Int(numberSegment + 1) {
                 let point = getPointSmooth(at: i,
                                            j: lj + i,
                                            smoothingFactor: chart.smoothingFactor,

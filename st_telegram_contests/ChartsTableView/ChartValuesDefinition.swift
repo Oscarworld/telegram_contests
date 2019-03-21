@@ -72,9 +72,8 @@ extension ChartValuesDefinitionControl {
         definitionValuePoint += deltaValue
         definitionValuePoint = boundValue(value: definitionValuePoint, toLowerValue: 0.0, upperValue: 1.0)
         
-        let lj = Int(chart.lowerXAxis * chart.smoothingFactor) % Int(chart.smoothingFactor)
-        let rj = Int(chart.upperXAxis * chart.smoothingFactor) % Int(chart.smoothingFactor)
-        let numberSegment = (chart.xAxisValues.count - 1) * Int(chart.smoothingFactor) + rj - lj
+        let lj = chart.lj
+        let numberSegment = chart.numberSegment
         
         let indexPoint = max((Int(definitionValuePoint * CGFloat(numberSegment)) + lj) / Int(chart.smoothingFactor), lj == 0 ? 0 : 1)
         let oldIndexPoint = max((Int(chart.definitionValuePoint * CGFloat(numberSegment)) + lj) / Int(chart.smoothingFactor), lj == 0 ? 0 : 1)

@@ -75,9 +75,10 @@ struct OptimizedChart {
     
     var insetsWithAxes: UIEdgeInsets = .zero
     var stretchingYAxis: CGFloat = 0.15
-    var smoothingFactor: CGFloat = 10
+    var smoothingFactor: CGFloat = 4
     
     var xAxisFont = UIFont.systemFont(ofSize: 12.0)
+    var xAxisFontAlpha: CGFloat = 0.0
     var xAxisTextColor = Theme.shared.axisTextColor
     var yAxisFont = UIFont.systemFont(ofSize: 12.0)  {
         didSet {
@@ -95,7 +96,6 @@ struct OptimizedChart {
     var upperXAxis: CGFloat = 0
     
     var lj: Int = 0
-    var rj: Int = 0
     var numberSegment: Int = 0
     
     var definitionValuePoint: CGFloat = 0.7
@@ -173,10 +173,11 @@ struct OptimizedChart {
         }
         
         let numberSegmentVisibleXAxis = min(self.numberSegmentVisibleXAxis, x.count)
-        let allNumberSegmentXAxis = (CGFloat(numberSegmentVisibleXAxis) / (upperValue - lowerValue)).rounded(.down)
+        let allNumberSegmentXAxis = CGFloat(numberSegmentVisibleXAxis) / (upperValue - lowerValue)
+        let allNumberSegmentXAxisRounded = allNumberSegmentXAxis.rounded(.down)
         
-        let l2 = log2(allNumberSegmentXAxis).rounded(.down)
-        let val = Int(pow(2, l2))
+        let l2 = log2(allNumberSegmentXAxisRounded).rounded(.down)
+        let numberSegmentXAxis = Int(pow(2, l2))
         
         if refresh {
             let minMaxValues = visibleGraphs.map { (min: $0.minY, max: $0.maxY) }
@@ -190,12 +191,12 @@ struct OptimizedChart {
         self.xAxisYear = Array(xYear[Int(lowerXAxis)..<Int(upperXAxis)])
         self.xAxisMonthDay = Array(xMonthDay[Int(lowerXAxis)..<Int(upperXAxis)])
         
+        self.xAxisFontAlpha = log2(allNumberSegmentXAxis) - log2(allNumberSegmentXAxis).rounded(.down)
         self.lj = lj
-        self.rj = rj
         self.numberSegment = numberSegment
         self.lowerXAxis = lowerXAxis
         self.upperXAxis = upperXAxis
-        self.numberSegmentXAxis = val
+        self.numberSegmentXAxis = numberSegmentXAxis
         self.xAxisValues = xAxisValues
         self.visibleGraphs = visibleGraphs
         self.visibleFrameGraphs = visibleFrameGraphs.map { $0 }
