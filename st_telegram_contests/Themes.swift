@@ -50,6 +50,8 @@ class Theme {
             mainColor = UIColor(netHex: 0xFEFEFE)
             additionalColor = UIColor(netHex: 0xEFEFF4)
             axisColor = UIColor(netHex: 0xE1E2E3)
+            axisLineColor = UIColor(netHex: 0xF3F3F3)
+            definitionLineColor = UIColor(netHex: 0xCFD1D2)
             mainTextColor = UIColor(netHex: 0x000000)
             additionalTextColor = UIColor(netHex: 0x68686D)
             axisTextColor = UIColor(netHex: 0x989EA2)
@@ -62,6 +64,8 @@ class Theme {
             mainColor = UIColor(netHex: 0x222F3F)
             additionalColor = UIColor(netHex: 0x18222D)
             axisColor = UIColor(netHex: 0x131B23)
+            axisLineColor = UIColor(netHex: 0x1B2734)
+            definitionLineColor = UIColor(netHex: 0x131B23)
             mainTextColor = UIColor(netHex: 0xFFFFFF)
             additionalTextColor = UIColor(netHex: 0x5B6B80)
             axisTextColor = UIColor(netHex: 0x5B6B80)
@@ -78,6 +82,8 @@ class Theme {
     lazy var additionalColor: UIColor = UIColor(netHex: 0xEFEFF4)
     
     lazy var axisColor: UIColor = UIColor(netHex: 0xE1E2E3)
+    lazy var axisLineColor: UIColor = UIColor(netHex: 0xF3F3F3)
+    lazy var definitionLineColor: UIColor = UIColor(netHex: 0xCFD1D2)
     
     lazy var mainTextColor: UIColor = UIColor(netHex: 0x000000)
     lazy var additionalTextColor: UIColor = UIColor(netHex: 0x68686D)

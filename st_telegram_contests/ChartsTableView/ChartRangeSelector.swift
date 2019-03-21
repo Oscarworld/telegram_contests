@@ -265,6 +265,9 @@ extension ChartRangeControl {
     }
     
     func drawGrapth() {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         chartLayer.setNeedsDisplay()
+        CATransaction.commit()
     }
 }

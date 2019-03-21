@@ -19,10 +19,9 @@ class ChartValuesDefinitionControl: UIControl {
         var layer = DefenitionPointLayer()
         layer.contentsScale = UIScreen.main.scale
         layer.drawsAsynchronously = true
+        layer.isHidden = true
         return layer
     }()
-    
-    var previousLocation = CGPoint()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -37,13 +36,20 @@ class ChartValuesDefinitionControl: UIControl {
         super.draw(rect)
         definitionLayer.frame = rect
         definitionLayer.chart = chart
+        
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        
         definitionLayer.setNeedsDisplay()
+        
+        CATransaction.commit()
     }
     
     func configure(chart: OptimizedChart) {
         self.chart = chart
         self.definitionValuePoint = chart.definitionValuePoint
         self.definitionLayer.chart = chart
+        self.definitionLayer.isHidden = true
     }
 }
 
@@ -51,26 +57,18 @@ class ChartValuesDefinitionControl: UIControl {
 // MARK: Handler
 extension ChartValuesDefinitionControl {
     override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-        previousLocation = touch.location(in: self)
-        
-        let trackingRect = CGRect(x: max(chart.definitionValuePoint * frame.width - 100, 0),
-                                  y: 0,
-                                  width: 200,
-                                  height: frame.height)
+        definitionValuePoint = boundValue(value: touch.location(in: self).x / bounds.width, toLowerValue: 0.0, upperValue: 1.0)
+        updateLayer()
 
-        return trackingRect.contains(previousLocation)
+        return true
+    }
+    
+    override func endTracking(_ touch: UITouch?, with event: UIEvent?) {
+        definitionLayer.isHidden = true
     }
 
     override func continueTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-        let location = touch.location(in: self)
-
-        let deltaLocation = CGFloat(location.x - previousLocation.x)
-        let deltaValue = deltaLocation / bounds.width
-
-        previousLocation = location
-
-        definitionValuePoint += deltaValue
-        definitionValuePoint = boundValue(value: definitionValuePoint, toLowerValue: 0.0, upperValue: 1.0)
+        definitionValuePoint = boundValue(value: touch.location(in: self).x / bounds.width, toLowerValue: 0.0, upperValue: 1.0)
         
         let lj = chart.lj
         let numberSegment = chart.numberSegment
@@ -79,19 +77,24 @@ extension ChartValuesDefinitionControl {
         let oldIndexPoint = max((Int(chart.definitionValuePoint * CGFloat(numberSegment)) + lj) / Int(chart.smoothingFactor), lj == 0 ? 0 : 1)
         
         if indexPoint != oldIndexPoint {
-            chart.definitionValuePoint = definitionValuePoint
-            
-            CATransaction.begin()
-            CATransaction.setDisableActions(true)
-            
-            setNeedsDisplay()
-            
-            CATransaction.commit()
-            
-            sendActions(for: .valueChanged)
+            updateLayer()
         }
 
         return true
+    }
+    
+    func updateLayer() {
+        chart.definitionValuePoint = definitionValuePoint
+        
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        
+        setNeedsDisplay()
+        definitionLayer.isHidden = false
+        
+        CATransaction.commit()
+        
+        sendActions(for: .valueChanged)
     }
 
     func boundValue(value: CGFloat, toLowerValue lowerValue: CGFloat, upperValue: CGFloat) -> CGFloat {

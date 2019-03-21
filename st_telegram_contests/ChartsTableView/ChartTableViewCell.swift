@@ -13,6 +13,7 @@ class ChartTableViewCell: UITableViewCell {
     var chart: OptimizedChart!
     var rangeChanged: ((CGFloat, CGFloat) -> Void)!
     var changeYAxis: ((CGFloat, CGFloat) -> Void)!
+    var changeMinMaxYAxis: ((CGFloat, CGFloat, CGFloat, CGFloat) -> Void)!
     var definitionChanged: ((CGFloat) -> Void)!
     
     lazy var chartLayer: ChatLayer = {
@@ -70,9 +71,14 @@ class ChartTableViewCell: UITableViewCell {
                                             width: rect.width - 30,
                                             height: (rect.height - 30) * ratio)
         
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        
         chartLayer.setNeedsDisplay()
         chartSelectorControl.setNeedsDisplay()
         chartDefinitionControl.setNeedsDisplay()
+        
+        CATransaction.commit()
     }
     
     func updateTheme() {
@@ -104,7 +110,7 @@ class ChartTableViewCell: UITableViewCell {
     
     @objc func rangeSliderValueChanged(_ rangeSlider: ChartRangeControl) {
         if !(rangeTimer?.isValid ?? false) {
-            rangeTimer = Timer.scheduledTimer(timeInterval: 0.3,
+            rangeTimer = Timer.scheduledTimer(timeInterval: 0.14,
                                               target: self,
                                               selector: #selector(updateYAxis),
                                               userInfo: nil,
@@ -123,16 +129,18 @@ class ChartTableViewCell: UITableViewCell {
     @objc func rangeDidChange() {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
+        
         chartLayer.chart = chart
         chartDefinitionControl.configure(chart: chart)
         chartLayer.setNeedsDisplay()
         chartDefinitionControl.setNeedsDisplay()
+        
         CATransaction.commit()
     }
     
     @objc func updateYAxis() {
         var counter = 0
-        let allCounter = 10
+        let allCounter = 6
         let oldMinMax = chart.yAxisFrameRange
         
         let i = 0
@@ -169,8 +177,10 @@ class ChartTableViewCell: UITableViewCell {
             counter = allCounter
         }
         
+        changeMinMaxYAxis(oldMinMax.min, oldMinMax.max, newMinMax.min, newMinMax.max)
+        
         loopTimer?.invalidate()
-        loopTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { [weak self] timer in
+        loopTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] timer in
             guard let aSelf = self else {
                 timer.invalidate()
                 return
@@ -179,6 +189,7 @@ class ChartTableViewCell: UITableViewCell {
             counter += 1
             if counter >= allCounter {
                 aSelf.changeYAxis(newMinMax.min, newMinMax.max)
+                
                 timer.invalidate()
             }
             

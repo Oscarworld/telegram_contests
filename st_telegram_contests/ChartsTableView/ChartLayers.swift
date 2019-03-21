@@ -27,12 +27,9 @@ class PlainChatLayer: CALayer {
     }
     
     override func draw(in ctx: CGContext) {
-        let startTime = CFAbsoluteTimeGetCurrent()
         ctx.drawPlainChart(chart,
                            frame: frame,
                            lineWidth: lineWidth)
-        print("/////Time elapsed for plain draw: \(CFAbsoluteTimeGetCurrent() - startTime) s.")
-
     }
 }
 
@@ -54,13 +51,9 @@ class ChatLayer: CALayer {
     }
     
     override func draw(in ctx: CGContext) {
-        let startTime = CFAbsoluteTimeGetCurrent()
-
         ctx.drawChart(chart,
                       frame: frame,
                       lineWidth: lineWidth)
-        print("/////Time elapsed for chart: \(CFAbsoluteTimeGetCurrent() - startTime) s.")
-
     }
 }
 
@@ -139,8 +132,10 @@ class DefenitionPointLayer: CALayer {
     }
     
     override func draw(in ctx: CGContext) {
-        let startTime = CFAbsoluteTimeGetCurrent()
-
+        guard self.isHidden == false else {
+            return
+        }
+        
         ctx.drawDefinition(chart: chart,
                            frame: frame,
                            pointSize: pointSize,
@@ -151,7 +146,5 @@ class DefenitionPointLayer: CALayer {
                            rectInsets: rectInsets,
                            insetColumn: insetColumn,
                            insetRow: insetRow)
-        
-        print("/////Time elapsed definition: \(CFAbsoluteTimeGetCurrent() - startTime) s.")
     }
 }

@@ -65,8 +65,8 @@ extension CGContext {
         drawCoordinates(frame: frame,
                         chart: chart,
                         xAxisFont: chart.xAxisFont, yAxisFont: chart.yAxisFont,
-                        axisColor: chart.axisColor,
-                        xAxisColor: chart.xAxisTextColor, yAxisColor: chart.yAxisTextColor,
+                        axisColor: Theme.shared.axisLineColor,
+                        xAxisColor: Theme.shared.axisTextColor, yAxisColor: Theme.shared.axisTextColor,
                         xAxisValues: chart.xAxisValues,
                         minY: chart.yAxisFrameRange.min, maxY: chart.yAxisFrameRange.max,
                         insets: chart.insets,
@@ -97,23 +97,29 @@ extension CGContext {
             return
         }
         
-        let lastValueWidth = chart.xMonthDayWidth.last ?? 0
-        
-        let resizedWidth = (frame.width - insets.left - insets.right - lastValueWidth) / (chart.upperValue - chart.lowerValue)
+        let resizedWidth = (frame.width - insets.left - insets.right) / (chart.upperValue - chart.lowerValue)
+
         let xAxisSegmentIndexWidth = CGFloat(chart.x.count - 1) / CGFloat(chart.numberSegmentXAxis)
         let xAxisSegmentWidth = resizedWidth / CGFloat(chart.numberSegmentXAxis)
-        let yAxisSegmentWidth = (frame.height - insets.top - insets.bottom - xAxisFont.lineHeight * 2 - spaceBetweenAxes) / CGFloat(numberSegmentYAxis)
+        let yAxisWidth = frame.height - insets.top - insets.bottom - xAxisFont.lineHeight * 2 - spaceBetweenAxes
+        let yAxisSegmentWidth = yAxisWidth / CGFloat(numberSegmentYAxis)
         
-        //TODO: replace y
-        let y = (maxY - minY) / CGFloat(numberSegmentYAxis)
         saveGState()
         
-        for i in 0..<(chart.numberSegmentXAxis + 1) {
+        for i in 0..<chart.numberSegmentXAxis + 1 {
             let alpha = i % 2 == 0 ? 1.0 : chart.xAxisFontAlpha * 6
             let i = CGFloat(i)
-            let index = Int(i * xAxisSegmentIndexWidth)
+            let index = Int((i * xAxisSegmentIndexWidth).rounded())
             let width = chart.xMonthDayWidth[index]
-            let x = insets.left + xAxisSegmentWidth * i - resizedWidth * chart.lowerValue
+            var x = insets.left + xAxisSegmentWidth * i - resizedWidth * chart.lowerValue
+            
+            if i > 0 && Int(i) < chart.numberSegmentXAxis {
+                x -= width / 2
+            }
+            
+            if Int(i) == chart.numberSegmentXAxis {
+                x -= width
+            }
             
             if x < -width || x > frame.width - insets.left - insets.right {
                 continue
@@ -128,24 +134,84 @@ extension CGContext {
                 y: insets.bottom)
         }
         
+        let oldMin = chart.oldYAxisFrameRange.min
+        let oldMax = chart.oldYAxisFrameRange.max
+        let newMin = chart.newYAxisFrameRange.min
+        let newMax = chart.newYAxisFrameRange.max
+        
+        let difMax = newMax - oldMax
+        let difMin = newMin - oldMin
+        
+        let y = (maxY - minY) / CGFloat(numberSegmentYAxis)
+        let oldY = (oldMax - oldMin) / CGFloat(numberSegmentYAxis)
+        let newY = (newMax - newMin) / CGFloat(numberSegmentYAxis)
+        
+        var stepX: CGFloat = 0
+            
+        if difMax != 0 {
+            stepX = abs((maxY - chart.oldYAxisFrameRange.max) / difMax)
+        } else if difMin != 0 {
+            stepX = abs((minY - chart.oldYAxisFrameRange.min) / difMin)
+        }
+        
         for i in 0..<(numberSegmentYAxis + 1) {
             let i = CGFloat(i)
-            let linePosition = frame.height - insets.bottom - xAxisFont.lineHeight - spaceBetweenAxes - yAxisSegmentWidth * i
             
-            drawLine(fromPoint: CGPoint(x: 0, y: linePosition),
-                     toPoint: CGPoint(x: frame.width, y: linePosition),
-                     color: axisColor.withAlphaComponent(1.0 - i * 0.1).cgColor,
-                     lineWidth: 1.2)
+            let lineColor = i == 0 ? Theme.shared.axisColor : Theme.shared.axisLineColor
             
-            let value = Int(minY + i * y)
-            
-            drawText(
-                text: "\(value)",
-                font: xAxisFont,
-                color: yAxisColor,
-                frame: frame,
-                x: insets.left,
-                y: insets.bottom + xAxisFont.lineHeight + yAxisSegmentWidth * CGFloat(i) + spaceBetweenAxes)
+            if stepX != 0, difMax != 0 || difMin != 0 {
+                // От настоящего к уменьшенному
+                let k1 = yAxisSegmentWidth * i  - (yAxisSegmentWidth * i - ((newMin - oldMin) / (oldMax - oldMin)) * yAxisWidth) * ((oldMax - oldMin) / (newMax - newMin))
+                var linePosition = frame.height - insets.bottom - xAxisFont.lineHeight - spaceBetweenAxes - yAxisSegmentWidth * i + k1 * stepX
+                if frame.minY...frame.maxY ~= linePosition {
+                    drawLine(fromPoint: CGPoint(x: 0, y: linePosition),
+                             toPoint: CGPoint(x: frame.width, y: linePosition),
+                             color: lineColor.withAlphaComponent(1.0 - stepX).cgColor,
+                             lineWidth: 1.2)
+                    drawText(
+                        text: "\(Int(oldMin + i * oldY))",
+                        font: xAxisFont,
+                        color: yAxisColor.withAlphaComponent(1.0 - stepX),
+                        frame: frame,
+                        x: insets.left,
+                        y: frame.height - linePosition)
+                }
+                
+                // От большого к настоящему
+                let k2 = yAxisSegmentWidth * i  - (yAxisSegmentWidth * i * ((newMax - newMin) / (oldMax - oldMin)) + ((newMin - oldMin) / (oldMax - oldMin)) * yAxisWidth)
+                linePosition = frame.height - insets.bottom - xAxisFont.lineHeight - spaceBetweenAxes - yAxisSegmentWidth * i + k2 * (1.0 - stepX)
+                if frame.minY...frame.maxY ~= linePosition {
+                    drawLine(fromPoint: CGPoint(x: 0, y: linePosition),
+                             toPoint: CGPoint(x: frame.width, y: linePosition),
+                             color: lineColor.withAlphaComponent(stepX).cgColor,
+                             lineWidth: 1.2)
+                    
+                    drawText(
+                        text: "\(Int(newMin + i * newY))",
+                        font: xAxisFont,
+                        color: yAxisColor.withAlphaComponent(stepX),
+                        frame: frame,
+                        x: insets.left,
+                        y: frame.height - linePosition)
+                }
+            } else {
+                let linePosition = frame.height - insets.bottom - xAxisFont.lineHeight - spaceBetweenAxes - yAxisSegmentWidth * i
+                
+                drawLine(fromPoint: CGPoint(x: 0, y: linePosition),
+                         toPoint: CGPoint(x: frame.width, y: linePosition),
+                         color: lineColor.withAlphaComponent(1.0).cgColor,
+                         lineWidth: 1.2)
+                
+                let value = Int(minY + i * y)
+                
+                drawText(
+                    text: "\(value)",
+                    font: xAxisFont,
+                    color: yAxisColor,
+                    frame: frame,
+                    x: insets.left,
+                    y: insets.bottom + xAxisFont.lineHeight + yAxisSegmentWidth * CGFloat(i) + spaceBetweenAxes)
+            }
         }
         
         restoreGState()
@@ -245,7 +311,7 @@ extension CGContext {
         
         drawLine(fromPoint: lineFromPoint,
                  toPoint: lineToPoint,
-                 color: Theme.shared.axisColor.cgColor)
+                 color: Theme.shared.definitionLineColor.cgColor)
         
         for graph in chart.visibleFrameGraphs {
             setStrokeColor(graph.color.cgColor)

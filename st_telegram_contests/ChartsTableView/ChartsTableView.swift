@@ -92,8 +92,21 @@ extension ChartsTableView: UITableViewDataSource {
                 cell.chart = strongSelf.charts[indexPath.section]
                 
             }
+            cell.changeMinMaxYAxis = { [weak self] oldMin, oldMax, newMin, newMax in
+                guard let strongSelf = self else {
+                    return
+                }
+                
+                strongSelf.charts[indexPath.section].oldYAxisFrameRange = (oldMin, oldMax)
+                strongSelf.charts[indexPath.section].newYAxisFrameRange = (newMin, newMax)
+                cell.chart = strongSelf.charts[indexPath.section]
+                cell.chartLayer.chart = strongSelf.charts[indexPath.section]
+            }
             
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
             cell.setNeedsDisplay()
+            CATransaction.commit()
             
             return cell
         }

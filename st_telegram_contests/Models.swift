@@ -86,9 +86,6 @@ struct OptimizedChart {
         }
     }
     
-    var yAxisTextColor = Theme.shared.axisTextColor
-    var axisColor = Theme.shared.axisColor
-    
     var lowerValue: CGFloat = 0.6
     var upperValue: CGFloat = 1.0
     
@@ -107,6 +104,9 @@ struct OptimizedChart {
     var yAxisRange: (min: CGFloat, max: CGFloat) = (0, 0)
     var visibleGraphs: [Graph] = []
     var visibleFrameGraphs: [Graph] = []
+    
+    var oldYAxisFrameRange: (min: CGFloat, max: CGFloat) = (0, 0)
+    var newYAxisFrameRange: (min: CGFloat, max: CGFloat) = (0, 0)
     
     var numberSegmentVisibleXAxis = 4
     var numberSegmentXAxis: Int = 0
@@ -232,6 +232,8 @@ struct OptimizedChart {
         let yAxisFrameRange = getYAxisRange(minValue: minMaxYAxisFrameValue.min, maxValue: minMaxYAxisFrameValue.max, stretching: stretchingYAxis)
         
         self.yAxisFrameRange = yAxisFrameRange
+        self.oldYAxisFrameRange = yAxisFrameRange
+        self.newYAxisFrameRange = yAxisFrameRange
     }
     
     private mutating func updateInsets() {
@@ -239,6 +241,32 @@ struct OptimizedChart {
                                            left: insets.left,
                                            bottom: insets.bottom + yAxisFont.lineHeight + spaceBetweenAxes,
                                            right: insets.right)
+    }
+    
+    func newYAxis(minY: CGFloat, maxY: CGFloat) -> (min: CGFloat, max: CGFloat) {
+        if minY + maxY == 0 {
+            return (0, 0)
+        }
+        
+        let v1no = Int(log10(abs(max(minY, 1))))
+        let v2no = Int(log10(abs(max(maxY, 1))))
+        let rangeOrder = Int(log10(max(abs(maxY - minY), 1)))
+        let left = max(v1no - rangeOrder + 2, 0)
+        let right = v2no - rangeOrder + 2
+        
+        if minY == 0 {
+            return (0, round(value: maxY, range: right, roundUp: true))
+        }
+        
+        return (round(value: minY, range: left, roundUp: false), round(value: maxY, range: right, roundUp: true))
+    }
+    
+    func round(value: CGFloat, range: Int, roundUp: Bool) -> CGFloat {
+        let numberOrder = Int(log10(abs(value)))
+        let rnd = CGFloat(truncating: pow(10, range) as NSNumber)
+        let decimalValue = CGFloat(truncating: pow(10, numberOrder + 1) as NSNumber)
+        let newValue = (value / decimalValue * rnd)
+        return (roundUp ? newValue.rounded(.up) : newValue.rounded(.down)) * decimalValue / rnd
     }
     
     func getYAxisRange(minValue: CGFloat, maxValue: CGFloat, stretching: CGFloat) -> (min: CGFloat, max: CGFloat) {
@@ -254,7 +282,7 @@ struct OptimizedChart {
         
         maxYAxisValue += rangeYAxis * stretching
         
-        return (minYAxisValue, maxYAxisValue)
+        return newYAxis(minY: minYAxisValue, maxY: maxYAxisValue)
     }
 }
 
