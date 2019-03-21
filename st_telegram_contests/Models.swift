@@ -39,10 +39,26 @@ struct Graph {
     let name: String
     let type: ColumnType
     var isHidden: Bool
+    var minY: CGFloat
+    var maxY: CGFloat
+
+    public init(column: [CGFloat], color: UIColor, name: String, type: ColumnType, isHidden: Bool) {
+        self.column = column
+        self.color = color
+        self.name = name
+        self.type = type
+        self.isHidden = isHidden
+        let minMax = column.minMax() ?? (0, 0)
+        self.minY = minMax.min
+        self.maxY = minMax.max
+    }
 }
 
 struct OptimizedChart {
     var x: [Date] = []
+    var xYear: [String] = []
+    var xMonthDay: [String] = []
+    var xMonthDayWidth: [CGFloat] = []
     var graphs: [Graph] = []
     
     var insets: UIEdgeInsets = UIEdgeInsets(top: 15.0, left: 0.0, bottom: 0.0, right: 0.0) {
@@ -59,6 +75,7 @@ struct OptimizedChart {
     
     var insetsWithAxes: UIEdgeInsets = .zero
     var stretchingYAxis: CGFloat = 0.15
+    var smoothingFactor: CGFloat = 10
     
     var xAxisFont = UIFont.systemFont(ofSize: 12.0)
     var xAxisTextColor = Theme.shared.axisTextColor
@@ -74,70 +91,86 @@ struct OptimizedChart {
     var lowerValue: CGFloat = 0.6
     var upperValue: CGFloat = 1.0
     
+    var lowerXAxis: CGFloat = 0
+    var upperXAxis: CGFloat = 0
+    
+    var lj: Int = 0
+    var rj: Int = 0
+    var numberSegment: Int = 0
+    
     var definitionValuePoint: CGFloat = 0.7
     
     var xAxisValues: [Date] = []
+    var xAxisYear: [String] = []
+    var xAxisMonthDay: [String] = []
+    var yAxisFrameRange: (min: CGFloat, max: CGFloat) = (0, 0)
     var yAxisRange: (min: CGFloat, max: CGFloat) = (0, 0)
     var visibleGraphs: [Graph] = []
+    var visibleFrameGraphs: [Graph] = []
     
     var numberSegmentVisibleXAxis = 4
     var numberSegmentXAxis: Int = 0
-    var needAnimation = false
+    
+    var timer: Timer?
     
     init(chart: Chart) {
         self.x = chart.x
         self.graphs = chart.graphs
-        self.update()
+        self.xYear = chart.x.map { Theme.shared.yearFormatter.string(from: $0) }
+        self.xMonthDay = chart.x.map { Theme.shared.monthDayFormatter.string(from: $0) }
+        self.xMonthDayWidth = self.xMonthDay.map { $0.boundingRect(font: self.xAxisFont).width }
+        self.update(refresh: true)
+        self.updateYAxis()
         self.updateInsets()
     }
     
     mutating func hideGraph(at index: Int) {
         graphs[index].isHidden = true
-        self.update()
+        self.update(refresh: true)
+
     }
     
     mutating func showGraph(at index: Int) {
         graphs[index].isHidden = false
-        update()
+        update(refresh: true)
     }
     
     mutating func changeBoundaries(lowerValue: CGFloat, upperValue: CGFloat) {
         self.lowerValue = lowerValue
         self.upperValue = upperValue
-        self.update()
+        self.update(refresh: false)
     }
     
-    private mutating func update() {
-        self.needAnimation = false
-        
+    private mutating func update(refresh: Bool) {
         guard x.count > 1 else {
             return
         }
         
-        let lowerXAxis = Int(CGFloat(x.count) * lowerValue)
-        let upperXAxis = Int(CGFloat(x.count) * upperValue)
+        let lowerXAxis = CGFloat(x.count) * lowerValue
+        let upperXAxis = CGFloat(x.count) * upperValue
         
         guard lowerXAxis < upperXAxis else {
             return
         }
         
-        let visibleGraphs: [Graph] = graphs.filter { !$0.isHidden }.map {
+        let visibleGraphs: [Graph] = refresh ? graphs.filter { !$0.isHidden } : self.visibleGraphs
+        let visibleFrameGraphs: [Graph] = visibleGraphs.map {
             var graph = $0
-            graph.column = Array(graph.column[lowerXAxis..<upperXAxis])
+            
+            graph.column = Array($0.column[Int(lowerXAxis)..<Int(upperXAxis)])
+            
+            if upperXAxis != upperXAxis.rounded(.down) {
+                graph.column.append($0.column[Int(upperXAxis)])
+            }
+            
             return graph
         }
         
-        let xAxisValues = Array(x[lowerXAxis..<upperXAxis])
-        let yAxisValues = visibleGraphs.flatMap{ $0.column }
+        let xAxisValues = Array(x[Int(lowerXAxis)..<Int(upperXAxis)])
         
         guard xAxisValues.count > 1 else {
             return
         }
-        
-        let minYAxisValue = yAxisValues.min() ?? 0
-        let maxYAxisValue = yAxisValues.max() ?? 0
-        
-        let yAxisRange = getYAxisRange(minValue: minYAxisValue, maxValue: maxYAxisValue, stretching: stretchingYAxis)
         
         let numberSegmentVisibleXAxis = min(self.numberSegmentVisibleXAxis, x.count)
         let allNumberSegmentXAxis = (CGFloat(numberSegmentVisibleXAxis) / (upperValue - lowerValue)).rounded(.down)
@@ -145,14 +178,59 @@ struct OptimizedChart {
         let l2 = log2(allNumberSegmentXAxis).rounded(.down)
         let val = Int(pow(2, l2))
         
-        if self.numberSegmentXAxis != val {
-            self.needAnimation = true
+        if refresh {
+            let minMaxValues = visibleGraphs.map { (min: $0.minY, max: $0.maxY) }
+            self.yAxisRange = (minMaxValues.map { $0.min }.min() ?? 0 , minMaxValues.map { $0.max }.max() ?? 0)
         }
         
+        let lj = Int(lowerXAxis * smoothingFactor) % Int(smoothingFactor)
+        let rj = Int(upperXAxis * smoothingFactor) % Int(smoothingFactor)
+        let numberSegment = (xAxisValues.count - 1) * Int(smoothingFactor) + rj - lj
+        
+        self.xAxisYear = Array(xYear[Int(lowerXAxis)..<Int(upperXAxis)])
+        self.xAxisMonthDay = Array(xMonthDay[Int(lowerXAxis)..<Int(upperXAxis)])
+        
+        self.lj = lj
+        self.rj = rj
+        self.numberSegment = numberSegment
+        self.lowerXAxis = lowerXAxis
+        self.upperXAxis = upperXAxis
         self.numberSegmentXAxis = val
         self.xAxisValues = xAxisValues
-        self.yAxisRange = yAxisRange
         self.visibleGraphs = visibleGraphs
+        self.visibleFrameGraphs = visibleFrameGraphs.map { $0 }
+    }
+    
+    mutating func updateYAxis() {
+        let i = 0
+        
+        let upLowerXAxis = max(Int(lowerXAxis.rounded(.up)) - i, 0)
+        let downLowerXAxis = max(Int(lowerXAxis) - i, 0)
+        
+        let upUpperXAxis = min(Int(upperXAxis.rounded(.up)) + i, x.count - 1)
+        let downUpperXAxis = min(Int(upperXAxis) + i, x.count - 1)
+        
+        let visibleFrameGraphs: [Graph] = visibleGraphs.map {
+            var smoothGraph = $0
+            
+            smoothGraph.column = Array($0.column[Int(upLowerXAxis)..<Int(downUpperXAxis)])
+            
+            var dif = ($0.column[upLowerXAxis] - $0.column[downLowerXAxis]) / smoothingFactor
+            var j = CGFloat(Int(max(0, lowerXAxis - CGFloat(i)) * smoothingFactor) % Int(smoothingFactor))
+            smoothGraph.column.append($0.column[downLowerXAxis] + dif * CGFloat(j))
+            
+            dif = ($0.column[upUpperXAxis] - $0.column[downUpperXAxis]) / smoothingFactor
+            j = CGFloat(Int(min(CGFloat(x.count - 1), upperXAxis + CGFloat(i)) * smoothingFactor) % Int(smoothingFactor))
+            smoothGraph.column.append($0.column[downUpperXAxis] + dif * CGFloat(j))
+            
+            return smoothGraph
+        }
+        
+        let minMaxYAxisFrameValue = visibleFrameGraphs.flatMap { $0.column }.minMax() ?? (0, 0)
+        
+        let yAxisFrameRange = getYAxisRange(minValue: minMaxYAxisFrameValue.min, maxValue: minMaxYAxisFrameValue.max, stretching: stretchingYAxis)
+        
+        self.yAxisFrameRange = yAxisFrameRange
     }
     
     private mutating func updateInsets() {
@@ -162,7 +240,7 @@ struct OptimizedChart {
                                            right: insets.right)
     }
     
-    private func getYAxisRange(minValue: CGFloat, maxValue: CGFloat, stretching: CGFloat) -> (min: CGFloat, max: CGFloat) {
+    func getYAxisRange(minValue: CGFloat, maxValue: CGFloat, stretching: CGFloat) -> (min: CGFloat, max: CGFloat) {
         var minYAxisValue = minValue
         var maxYAxisValue = maxValue
         let rangeYAxis = maxYAxisValue - minYAxisValue
@@ -228,11 +306,30 @@ struct Chart: Decodable {
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: ChartCodingKey.self)
-        
         let columns = try container.decode([[Column]].self, forKey: .columns)
         let types = try container.decode([String: String].self, forKey: .types)
         let names = try container.decode([String: String].self, forKey: .names)
         let colors = try container.decode([String: String].self, forKey: .colors)
         self.init(columns: columns, types: types, names: names, colors: colors)
+    }
+}
+
+extension Array where Array.Element : Comparable {
+    
+    public func minMax() -> (min: Element, max: Element)? {
+        guard !self.isEmpty else {
+            return nil
+        }
+        
+        var min = self[0]
+        var max = self[0]
+        for item in self[1..<self.count] {
+            if item < min {
+                min = item
+            } else if item > max {
+                max = item
+            }
+        }
+        return (min, max)
     }
 }

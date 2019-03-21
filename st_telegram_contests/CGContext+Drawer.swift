@@ -15,7 +15,7 @@ extension CGContext {
         _ chart: OptimizedChart,
         frame: CGRect,
         lineWidth: CGFloat
-    ) {
+        ) {
         guard chart.xAxisValues.count > 1 else {
             return
         }
@@ -25,17 +25,11 @@ extension CGContext {
         
         let stepXAxis = width / CGFloat(chart.x.count - 1)
         
-        let visibleGraphs: [Graph] = chart.graphs.filter { !$0.isHidden }
-        let yAxisValues = visibleGraphs.flatMap{ $0.column }
-        
-        let yAxisMin = yAxisValues.min() ?? 0
-        let yAxisMax = yAxisValues.max() ?? 0
-        
-        let rangeYAxis = yAxisMax - yAxisMin
+        let rangeYAxis = chart.yAxisRange.max - chart.yAxisRange.min
         
         saveGState()
         
-        for graph in visibleGraphs {
+        for graph in chart.visibleGraphs {
             setStrokeColor(graph.color.cgColor)
             setLineWidth(lineWidth)
             setLineJoin(.round)
@@ -47,7 +41,7 @@ extension CGContext {
                          insets: .zero,
                          stepXAxis: stepXAxis,
                          height: height,
-                         yAxisMax: yAxisMax,
+                         yAxisMax: chart.yAxisRange.max,
                          stretchRangeYAxis: rangeYAxis)
             }
             
@@ -63,10 +57,12 @@ extension CGContext {
         _ chart: OptimizedChart,
         frame: CGRect,
         lineWidth: CGFloat
-    ) {
+        ) {
         guard chart.xAxisValues.count > 1 else {
             return
         }
+        
+        var startTime = CFAbsoluteTimeGetCurrent()
         
         drawCoordinates(frame: frame,
                         chart: chart,
@@ -74,14 +70,16 @@ extension CGContext {
                         axisColor: chart.axisColor,
                         xAxisColor: chart.xAxisTextColor, yAxisColor: chart.yAxisTextColor,
                         xAxisValues: chart.xAxisValues,
-                        minY: chart.yAxisRange.min, maxY: chart.yAxisRange.max,
+                        minY: chart.yAxisFrameRange.min, maxY: chart.yAxisFrameRange.max,
                         insets: chart.insets,
                         spaceBetweenAxes: chart.spaceBetweenAxes)
+        startTime = CFAbsoluteTimeGetCurrent()
+        
         
         drawGraphs(chart: chart,
-                  frame: frame,
-                  insets: chart.insetsWithAxes,
-                  lineWidth: lineWidth)
+                   frame: frame,
+                   insets: chart.insetsWithAxes,
+                   lineWidth: lineWidth)
     }
     
     func drawCoordinates(
@@ -98,40 +96,34 @@ extension CGContext {
         maxY: CGFloat,
         insets: UIEdgeInsets,
         spaceBetweenAxes: CGFloat
-    ) {
+        ) {
         guard chart.x.count > 1 else {
             return
         }
         
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM dd"
-        
-        let lastValue = chart.x[chart.x.count - 1]
-        let lastValueWidth = formatter.string(from: lastValue).boundingRect(font: xAxisFont).width
+        let lastValueWidth = chart.xMonthDayWidth.last ?? 0
         
         let resizedWidth = (frame.width - insets.left - insets.right - lastValueWidth) / (chart.upperValue - chart.lowerValue)
-        
         let xAxisSegmentIndexWidth = CGFloat(chart.x.count - 1) / CGFloat(chart.numberSegmentXAxis)
-        
         let xAxisSegmentWidth = resizedWidth / CGFloat(chart.numberSegmentXAxis)
         let yAxisSegmentWidth = (frame.height - insets.top - insets.bottom - xAxisFont.lineHeight * 2 - spaceBetweenAxes) / CGFloat(numberSegmentYAxis)
         
         //TODO: replace y
         let y = (maxY - minY) / CGFloat(numberSegmentYAxis)
-        
         saveGState()
         
         for i in 0..<(chart.numberSegmentXAxis + 1) {
-            let index = Int(CGFloat(i) * xAxisSegmentIndexWidth)
-            let text = formatter.string(from: chart.x[index])
-            let x = insets.left + xAxisSegmentWidth * CGFloat(i) - resizedWidth * chart.lowerValue
+            let i = CGFloat(i)
+            let index = Int(i * xAxisSegmentIndexWidth)
+            let width = chart.xMonthDayWidth[index]
+            let x = insets.left + xAxisSegmentWidth * i - resizedWidth * chart.lowerValue
             
-            if x < -text.boundingRect(font: xAxisFont).width || x > frame.width - insets.left - insets.right {
+            if x < -width || x > frame.width - insets.left - insets.right {
                 continue
             }
             
             drawText(
-                text: text,
+                text: chart.xMonthDay[index],
                 font: xAxisFont,
                 color: xAxisColor,
                 frame: frame,
@@ -140,14 +132,15 @@ extension CGContext {
         }
         
         for i in 0..<(numberSegmentYAxis + 1) {
-            let linePosition = frame.height - insets.bottom - xAxisFont.lineHeight - spaceBetweenAxes - yAxisSegmentWidth * CGFloat(i)
+            let i = CGFloat(i)
+            let linePosition = frame.height - insets.bottom - xAxisFont.lineHeight - spaceBetweenAxes - yAxisSegmentWidth * i
             
             drawLine(fromPoint: CGPoint(x: 0, y: linePosition),
                      toPoint: CGPoint(x: frame.width, y: linePosition),
-                     color: axisColor.withAlphaComponent(1.0 - CGFloat(i) * 0.1).cgColor,
+                     color: axisColor.withAlphaComponent(1.0 - i * 0.1).cgColor,
                      lineWidth: 1.2)
             
-            let value = Int(minY + CGFloat(i) * y)
+            let value = Int(minY + i * y)
             
             drawText(
                 text: "\(value)",
@@ -162,36 +155,55 @@ extension CGContext {
     }
     
     func drawGraphs(chart: OptimizedChart,
-                   frame: CGRect,
-                   insets: UIEdgeInsets,
-                   lineWidth: CGFloat
+                    frame: CGRect,
+                    insets: UIEdgeInsets,
+                    lineWidth: CGFloat
         ) {
+        
         let width = frame.width - insets.left - insets.right
         let height = frame.height - insets.top - insets.bottom
         
-        let stepXAxis = width / CGFloat(chart.xAxisValues.count - 1)
-        let stretchRangeYAxis = chart.yAxisRange.max - chart.yAxisRange.min
-        let yAxisMax = chart.yAxisRange.max
+        let lj = Int(chart.lowerXAxis * chart.smoothingFactor) % Int(chart.smoothingFactor)
+        let rj = Int(chart.upperXAxis * chart.smoothingFactor) % Int(chart.smoothingFactor)
+        
+        let numberSegment = (chart.xAxisValues.count - 1) * Int(chart.smoothingFactor) + rj - lj
+        
+        let stepXAxis = width / CGFloat(numberSegment)
+        let rangeYAxis = chart.yAxisFrameRange.max - chart.yAxisFrameRange.min
+        let yAxisMax = chart.yAxisFrameRange.max
         
         saveGState()
         
-        for graph in chart.visibleGraphs {
+        for graph in chart.visibleFrameGraphs {
             setStrokeColor(graph.color.cgColor)
             setLineWidth(lineWidth)
             setLineJoin(.round)
             setLineCap(.round)
             
-            let points = (0..<graph.column.count).map{
-                getPoint(at: $0,
-                         column: graph.column,
-                         insets: insets,
-                         stepXAxis: stepXAxis,
-                         height: height,
-                         yAxisMax: yAxisMax,
-                         stretchRangeYAxis: stretchRangeYAxis)
-            }
+            let point = getPointSmooth(at: 0,
+                                       j: lj,
+                                       smoothingFactor: chart.smoothingFactor,
+                                       column: graph.column,
+                                       insets: insets,
+                                       stepXAxis: stepXAxis,
+                                       height: height,
+                                       yAxisMax: yAxisMax,
+                                       rangeYAxis: rangeYAxis)
             
-            addLines(between: points)
+            move(to: point)
+            
+            for i in 1..<Int(numberSegment) {
+                let point = getPointSmooth(at: i,
+                                           j: lj + i,
+                                           smoothingFactor: chart.smoothingFactor,
+                                           column: graph.column,
+                                           insets: insets,
+                                           stepXAxis: stepXAxis,
+                                           height: height,
+                                           yAxisMax: yAxisMax,
+                                           rangeYAxis: rangeYAxis)
+                addLine(to: point)
+            }
             
             drawPath(using: .stroke)
         }
@@ -210,7 +222,7 @@ extension CGContext {
         rectInsets: UIEdgeInsets,
         insetColumn: CGFloat,
         insetRow: CGFloat
-    ) {
+        ) {
         guard chart.xAxisValues.count > 1 else {
             return
         }
@@ -218,30 +230,41 @@ extension CGContext {
         let width = frame.width - chart.insetsWithAxes.left - chart.insetsWithAxes.right
         let height = frame.height - chart.insetsWithAxes.top - chart.insetsWithAxes.bottom
         
-        let stepXAxis = width / CGFloat(chart.xAxisValues.count - 1)
-        let yAxisMax = chart.yAxisRange.max
-        let stretchRangeYAxis = chart.yAxisRange.max - chart.yAxisRange.min
-        let indexPoint = Int(chart.definitionValuePoint * CGFloat(chart.xAxisValues.count - 1))
+        let lj = chart.lj
+        let numberSegment = chart.numberSegment
         
-        let lineFromPoint = CGPoint(x: CGFloat(indexPoint) * stepXAxis, y: chart.insetsWithAxes.top)
-        let lineToPoint = CGPoint(x: CGFloat(indexPoint) * stepXAxis, y: frame.height - chart.insetsWithAxes.bottom)
+        let indexPoint = max((Int(chart.definitionValuePoint * CGFloat(numberSegment)) + lj) / Int(chart.smoothingFactor), lj == 0 ? 0 : 1)
+        
+        let stepXAxis = width / CGFloat(numberSegment)
+        let i = Int(CGFloat(indexPoint) * chart.smoothingFactor - CGFloat(lj))
+        let x = chart.insetsWithAxes.left + CGFloat(i) * stepXAxis
+        
+        let rangeYAxis = chart.yAxisFrameRange.max - chart.yAxisFrameRange.min
+        let yAxisMax = chart.yAxisFrameRange.max
+        
+        let lineFromPoint = CGPoint(x: x, y: chart.insetsWithAxes.top)
+        let lineToPoint = CGPoint(x: x, y: frame.height - chart.insetsWithAxes.bottom)
         
         saveGState()
         
-        drawLine(fromPoint: lineFromPoint, toPoint: lineToPoint, color: Theme.shared.axisColor.cgColor)
+        drawLine(fromPoint: lineFromPoint,
+                 toPoint: lineToPoint,
+                 color: Theme.shared.axisColor.cgColor)
         
-        for graph in chart.visibleGraphs {
+        for graph in chart.visibleFrameGraphs {
             setStrokeColor(graph.color.cgColor)
             setFillColor(Theme.shared.mainColor.cgColor)
             setLineWidth(lineWidth)
             
-            let point = getPoint(at: indexPoint,
-                                 column: graph.column,
-                                 insets: chart.insetsWithAxes,
-                                 stepXAxis: stepXAxis,
-                                 height: height,
-                                 yAxisMax: yAxisMax,
-                                 stretchRangeYAxis: stretchRangeYAxis)
+            let point = getPointSmooth(at: i,
+                                       j: lj + i,
+                                       smoothingFactor: chart.smoothingFactor,
+                                       column: graph.column,
+                                       insets: chart.insetsWithAxes,
+                                       stepXAxis: stepXAxis,
+                                       height: height,
+                                       yAxisMax: yAxisMax,
+                                       rangeYAxis: rangeYAxis)
             let pointRect = CGRect(x: point.x - pointSize.width * 0.5,
                                    y: point.y - pointSize.height * 0.5,
                                    width: pointSize.width,
@@ -251,9 +274,13 @@ extension CGContext {
             drawPath(using: .fillStroke)
         }
         
+        let maxValue = chart.visibleFrameGraphs.max { $0.column[indexPoint] > $1.column[indexPoint] }?.column[indexPoint]
+        
         drawValuesDefinition(frame: frame,
-                             graphs: chart.visibleGraphs.map { ("\(Int($0.column[indexPoint]))", $0.color) },
-                             date: chart.xAxisValues[indexPoint],
+                             graphs: chart.visibleFrameGraphs.map { ("\(Int($0.column[indexPoint]))", $0.color) },
+                             maxValue: maxValue,
+                             dateYear: chart.xAxisYear[indexPoint],
+                             dateMonthDay: chart.xAxisMonthDay[indexPoint],
                              index: indexPoint,
                              lineX: lineFromPoint.x,
                              insets: rectInsets,
@@ -269,7 +296,9 @@ extension CGContext {
     func drawValuesDefinition(
         frame: CGRect,
         graphs: [(value: String, color: UIColor)],
-        date: Date,
+        maxValue: CGFloat?,
+        dateYear: String,
+        dateMonthDay: String,
         index: Int,
         lineX: CGFloat,
         insets: UIEdgeInsets,
@@ -278,20 +307,15 @@ extension CGContext {
         yearFont: UIFont,
         monthDayFont: UIFont,
         valueFont: UIFont
-    ) {
+        ) {
+        
         let countLine = max(2, graphs.count)
         
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM dd"
-        
-        let monthDay = formatter.string(from: date)
-        
-        formatter.dateFormat = "yyyy"
-        let year = formatter.string(from: date)
-        
-        let firstColumnWidth = max(year.boundingRect(font: yearFont).width,
-                                   monthDay.boundingRect(font: monthDayFont).width)
-        let secondColumnWidth = graphs.map { $0.value.boundingRect(font: valueFont).width }.max() ?? 0
+        let firstColumnWidth = dateMonthDay.boundingRect(font: monthDayFont).width
+        var secondColumnWidth: CGFloat = 0
+        if let value = maxValue {
+            secondColumnWidth = "\(value)".boundingRect(font: valueFont).width
+        }
         
         let rectWidth = insets.left + firstColumnWidth + insetColumn + secondColumnWidth + insets.right
         let rectHeight = insets.top + CGFloat(countLine) * valueFont.lineHeight + CGFloat(countLine - 1) * insetRow + insets.bottom
@@ -311,13 +335,13 @@ extension CGContext {
         addPath(path)
         drawPath(using: .fill)
         
-        drawText(text: monthDay,
+        drawText(text: dateMonthDay,
                  font: monthDayFont,
                  color: Theme.shared.definitionDateTextColor,
                  frame: frame,
                  x: monthDayPoint.x,
                  y: monthDayPoint.y)
-        drawText(text: year,
+        drawText(text: dateYear,
                  font: yearFont,
                  color: Theme.shared.definitionDateTextColor,
                  frame: frame,
@@ -346,12 +370,21 @@ extension CGContext {
         return CGPoint(x: x, y: y)
     }
     
+    func getPointSmooth(at index: Int, j: Int, smoothingFactor: CGFloat, column: [CGFloat], insets: UIEdgeInsets, stepXAxis: CGFloat, height: CGFloat, yAxisMax: CGFloat, rangeYAxis: CGFloat) -> CGPoint {
+        let x = insets.left + CGFloat(index) * stepXAxis
+        let newIndex = j / Int(smoothingFactor)
+        let j = CGFloat(j % Int(smoothingFactor))
+        let dif = newIndex + 1 == column.count ? 0 : (column[newIndex + 1] - column[newIndex]) / smoothingFactor
+        let y = insets.top + height * (yAxisMax - column[newIndex] - dif * j) / rangeYAxis
+        return CGPoint(x: x, y: y)
+    }
+    
     func drawLine(
         fromPoint start: CGPoint,
         toPoint end: CGPoint,
         color: CGColor,
         lineWidth: CGFloat = 1.0
-    ) {
+        ) {
         saveGState()
         
         setStrokeColor(color)
@@ -370,7 +403,7 @@ extension CGContext {
         frame: CGRect,
         x: CGFloat,
         y: CGFloat
-    ) {
+        ) {
         saveGState()
         
         textMatrix = .identity
@@ -404,16 +437,10 @@ extension CGContext {
 extension String {
     func boundingRect(width: CGFloat = .greatestFiniteMagnitude,
                       height: CGFloat = .greatestFiniteMagnitude,
-                      options: NSStringDrawingOptions = NSStringDrawingOptions.usesFontLeading.union(.usesLineFragmentOrigin),
-                      font: UIFont,
-                      countLine: Int = 0) -> CGRect {
-        let height: CGFloat = countLine == 0
-            ? height
-            : ceil(font.lineHeight * CGFloat(countLine))
-        
+                      font: UIFont) -> CGRect {
         return NSString(string: self).boundingRect(with: CGSize(width: width, height: height),
-                                                   options: options,
-                                                   attributes: [NSAttributedString.Key.font: font],
+                                                   options: .usesLineFragmentOrigin,
+                                                   attributes: [.font: font],
                                                    context: nil)
     }
 }

@@ -83,10 +83,17 @@ extension ChartsTableView: UITableViewDataSource {
                 strongSelf.charts[indexPath.section].definitionValuePoint = value
                 cell.chart = strongSelf.charts[indexPath.section]
             }
+            cell.changeYAxis = { [weak self] min, max in
+                guard let strongSelf = self else {
+                    return
+                }
+                
+                strongSelf.charts[indexPath.section].yAxisFrameRange = (min, max)
+                cell.chart = strongSelf.charts[indexPath.section]
+                
+            }
             
             cell.setNeedsDisplay()
-            
-           
             
             return cell
         }
@@ -145,6 +152,7 @@ extension ChartsTableView: UITableViewDelegate {
                 cell.isSelected = true
                 if let cell = tableView.cellForRow(at: IndexPath(row: 0, section: indexPath.section)) as? ChartTableViewCell {
                     cell.configure(chart: charts[indexPath.section])
+                    cell.updateYAxis()
                 }
             }
         }
@@ -157,6 +165,7 @@ extension ChartsTableView: UITableViewDelegate {
                 cell.isSelected = false
                 if let cell = tableView.cellForRow(at: IndexPath(row: 0, section: indexPath.section)) as? ChartTableViewCell {
                     cell.configure(chart: charts[indexPath.section])
+                    cell.updateYAxis()
                 }
             }
         }
