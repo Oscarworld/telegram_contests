@@ -72,7 +72,7 @@ extension ChartsTableView: UITableViewDataSource {
                     return
                 }
                 
-                strongSelf.charts[indexPath.section].changeBoundaries(lowerValue: lowerValue, upperValue: upperValue)
+                strongSelf.charts[indexPath.section].changeRange(lowerValue: lowerValue, upperValue: upperValue)
                 cell.chart = strongSelf.charts[indexPath.section]
             }
             cell.definitionChanged = { [weak self] value in
@@ -97,8 +97,8 @@ extension ChartsTableView: UITableViewDataSource {
                     return
                 }
                 
-                strongSelf.charts[indexPath.section].oldYAxisFrameRange = (oldMin, oldMax)
-                strongSelf.charts[indexPath.section].newYAxisFrameRange = (newMin, newMax)
+                strongSelf.charts[indexPath.section].oldYRange = (oldMin, oldMax)
+                strongSelf.charts[indexPath.section].newYRange = (newMin, newMax)
                 cell.chart = strongSelf.charts[indexPath.section]
                 cell.chartLayer.chart = strongSelf.charts[indexPath.section]
             }

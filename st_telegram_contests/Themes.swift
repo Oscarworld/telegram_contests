@@ -10,13 +10,12 @@ import UIKit
 
 class Theme {
     static let shared = Theme()
+    
     private init() {
         updateColors()
         monthDayFormatter.dateFormat = "MMM dd"
         yearFormatter.dateFormat = "yyyy"
     }
-    
-    private let themeModeKey = "ThemeModeKey"
     
     let monthDayFormatter = DateFormatter()
     let yearFormatter = DateFormatter()

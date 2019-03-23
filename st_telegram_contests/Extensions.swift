@@ -39,3 +39,23 @@ extension UIColor {
         self.init(red:(netHex >> 16) & 0xff, green:(netHex >> 8) & 0xff, blue:netHex & 0xff)
     }
 }
+
+extension Array where Array.Element : Comparable {
+    
+    public func minMax() -> (min: Element, max: Element)? {
+        guard !self.isEmpty else {
+            return nil
+        }
+        
+        var min = self[0]
+        var max = self[0]
+        for item in self[1..<self.count] {
+            if item < min {
+                min = item
+            } else if item > max {
+                max = item
+            }
+        }
+        return (min, max)
+    }
+}

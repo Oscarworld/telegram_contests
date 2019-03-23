@@ -70,11 +70,11 @@ extension ChartValuesDefinitionControl {
     override func continueTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
         definitionValuePoint = boundValue(value: touch.location(in: self).x / bounds.width, toLowerValue: 0.0, upperValue: 1.0)
         
-        let lj = chart.lj
-        let numberSegment = chart.numberSegment
+        let lsIndex = chart.lsIndex
+        let numberSegment = chart.segments
         
-        let indexPoint = max((Int(definitionValuePoint * CGFloat(numberSegment)) + lj) / Int(chart.smoothingFactor), lj == 0 ? 0 : 1)
-        let oldIndexPoint = max((Int(chart.definitionValuePoint * CGFloat(numberSegment)) + lj) / Int(chart.smoothingFactor), lj == 0 ? 0 : 1)
+        let indexPoint = max((Int(definitionValuePoint * CGFloat(numberSegment)) + lsIndex) / Int(chart.smoothFactor), lsIndex == 0 ? 0 : 1)
+        let oldIndexPoint = max((Int(chart.definitionValuePoint * CGFloat(numberSegment)) + lsIndex) / Int(chart.smoothFactor), lsIndex == 0 ? 0 : 1)
         
         if indexPoint != oldIndexPoint {
             updateLayer()

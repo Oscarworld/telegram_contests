@@ -10,21 +10,19 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    var theme: Theme { return Theme.shared }
-    
-    lazy var tableView: ChartsTableView = {
+    var tableView: ChartsTableView = {
         var tableView = ChartsTableView(frame: .zero, style: .grouped)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
     }()
     
     private func updateColors() {
-        self.view.backgroundColor = self.theme.additionalColor
-        self.navigationController?.navigationBar.barTintColor = self.theme.mainColor
-        self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: self.theme.mainTextColor]
-        self.tableView.backgroundColor = self.theme.additionalColor
-        UIApplication.shared.statusBarStyle = self.theme.barStyle
-        self.tableView.reloadData()
+        view.backgroundColor = Theme.shared.additionalColor
+        navigationController?.navigationBar.barTintColor = Theme.shared.mainColor
+        navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: Theme.shared.mainTextColor]
+        tableView.backgroundColor = Theme.shared.additionalColor
+        UIApplication.shared.statusBarStyle = Theme.shared.barStyle
+        tableView.reloadData()
     }
     
     override func viewDidLoad() {
@@ -47,9 +45,12 @@ class ViewController: UIViewController {
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-        ])
+            ])
         
-        NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveData(_:)), name: .didSwitchTheme, object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(onDidReceiveData(_:)),
+                                               name: .didSwitchTheme,
+                                               object: nil)
     }
     
     deinit {
@@ -70,4 +71,3 @@ class ViewController: UIViewController {
         return chart
     }
 }
-

@@ -155,20 +155,26 @@ class ChartTableViewCell: UITableViewCell {
             
             smoothGraph.column = Array($0.column[Int(upLowerXAxis)..<Int(downUpperXAxis)])
             
-            var dif = ($0.column[upLowerXAxis] - $0.column[downLowerXAxis]) / chart.smoothingFactor
-            var j = CGFloat(Int(max(0, chart.lowerXAxis - CGFloat(i)) * chart.smoothingFactor) % Int(chart.smoothingFactor))
+            var dif = ($0.column[upLowerXAxis] - $0.column[downLowerXAxis]) / chart.smoothFactor
+            var j = CGFloat(Int(max(0, chart.lowerXAxis - CGFloat(i)) * chart.smoothFactor) % Int(chart.smoothFactor))
             smoothGraph.column.append($0.column[downLowerXAxis] + dif * CGFloat(j))
             
-            dif = ($0.column[upUpperXAxis] - $0.column[downUpperXAxis]) / chart.smoothingFactor
-            j = CGFloat(Int(min(CGFloat(chart.x.count - 1), chart.upperXAxis + CGFloat(i)) * chart.smoothingFactor) % Int(chart.smoothingFactor))
+            dif = ($0.column[upUpperXAxis] - $0.column[downUpperXAxis]) / chart.smoothFactor
+            j = CGFloat(Int(min(CGFloat(chart.x.count - 1), chart.upperXAxis + CGFloat(i)) * chart.smoothFactor) % Int(chart.smoothFactor))
             smoothGraph.column.append($0.column[downUpperXAxis] + dif * CGFloat(j))
             
             return smoothGraph
         }
         
+        guard !visibleFrameGraphs.isEmpty else {
+            return
+        }
+        
         let minMaxYAxisFrameValue = visibleFrameGraphs.flatMap { $0.column }.minMax() ?? (0, 0)
         
-        let newMinMax = chart.getYAxisRange(minValue: minMaxYAxisFrameValue.min, maxValue: minMaxYAxisFrameValue.max, stretching: chart.stretchingYAxis)
+        let newMinMax = chart.getYAxisRange(minValue: minMaxYAxisFrameValue.min,
+                                            maxValue: minMaxYAxisFrameValue.max,
+                                            compressFactor: chart.compressFactor)
         
         let minStep = (newMinMax.min - oldMinMax.min) / CGFloat(allCounter)
         let maxStep = (newMinMax.max - oldMinMax.max) / CGFloat(allCounter)
