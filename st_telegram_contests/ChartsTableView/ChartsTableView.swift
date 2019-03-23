@@ -103,11 +103,6 @@ extension ChartsTableView: UITableViewDataSource {
                 cell.chartLayer.chart = strongSelf.charts[indexPath.section]
             }
             
-            CATransaction.begin()
-            CATransaction.setDisableActions(true)
-            cell.setNeedsDisplay()
-            CATransaction.commit()
-            
             return cell
         }
         

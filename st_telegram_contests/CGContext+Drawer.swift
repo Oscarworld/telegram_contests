@@ -6,7 +6,6 @@
 //  Copyright © 2019 Sergey Tobolin. All rights reserved.
 //
 
-import QuartzCore
 import UIKit
 
 extension CGContext {
@@ -132,7 +131,7 @@ extension CGContext {
         for i in 0..<(chart.segmentsYAxis + 1) {
             let i = CGFloat(i)
             
-            let lineColor = i == 0 ? Theme.shared.axisColor : Theme.shared.axisLineColor
+            let lineColor = Theme.shared.axisLineColor
             
             if stepX != 0, difMax != 0 || difMin != 0 {
                 // Line drawing under compression
@@ -195,7 +194,7 @@ extension CGContext {
             let alpha = i % 2 == 0 ? 1.0 : chart.xAxisFontAlpha * 6
             let index = Int((CGFloat(i) * xAxisDif).rounded())
             let textWidth = chart.daysRect[index].width
-            var x = insets.left + xAxisWidth * CGFloat(i) - textWidth * chart.lowerValue
+            var x = insets.left + xAxisWidth * CGFloat(i) - width * chart.lowerValue
             
             if i > 0 && i < chart.segmentsXAxis {
                 x -= textWidth / 2

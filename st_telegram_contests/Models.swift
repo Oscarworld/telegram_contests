@@ -8,6 +8,8 @@
 
 import UIKit
 
+typealias MinMaxType = (min: CGFloat, max: CGFloat)
+
 enum Column: Decodable {
     case integer(Int)
     case string(String)
@@ -113,8 +115,6 @@ struct Chart: Decodable {
 }
 
 struct OptimizedChart {
-    typealias minMaxType = (min: CGFloat, max: CGFloat)
-    
     var x: [Date] = []
     var xAxisValues: [Date] = []
     var graphs: [Graph] = []
@@ -142,7 +142,7 @@ struct OptimizedChart {
     }
     
     // The coefficient of compressing of the graph along the y axis
-    var compressFactor: CGFloat = 0.15
+    var compressFactor: CGFloat = 0.05
     // The number of graph breaks for smooth horizontal scrolling
     var smoothFactor: CGFloat = 4
     
@@ -173,18 +173,18 @@ struct OptimizedChart {
     var definitionValuePoint: CGFloat = 0.7
     
     // Min and max values of chart
-    var yAxisRange: minMaxType = (0, 0)
+    var yAxisRange: MinMaxType = (0, 0)
     // Min and max values of visible range chart
-    var yAxisFrameRange: minMaxType = (0, 0)
+    var yAxisFrameRange: MinMaxType = (0, 0)
     
     var visibleGraphs: [Graph] = []
     // Visible graphs with truncated x and y
     var visibleFrameGraphs: [Graph] = []
     
     // Min and max values of visible range chart before animation
-    var oldYRange: minMaxType = (0, 0)
+    var oldYRange: MinMaxType = (0, 0)
     // Min and max values of visible range chart after animation
-    var newYRange: minMaxType = (0, 0)
+    var newYRange: MinMaxType = (0, 0)
     
     // The number of displayed dates on the x axis
     var segmentsVisibleXAxis = 4
@@ -354,7 +354,7 @@ struct OptimizedChart {
         let rangeYAxis = maxValue - minValue
         
         if minValue >= 0 {
-            minYAxisValue = max(minValue - rangeYAxis * compressFactor, 0)
+            minYAxisValue = max(minValue - rangeYAxis * 0.3, 0)
         } else {
             minYAxisValue = minValue - rangeYAxis * compressFactor
         }

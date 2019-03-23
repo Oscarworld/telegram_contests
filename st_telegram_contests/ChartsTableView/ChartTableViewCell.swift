@@ -16,6 +16,8 @@ class ChartTableViewCell: UITableViewCell {
     var changeMinMaxYAxis: ((CGFloat, CGFloat, CGFloat, CGFloat) -> Void)!
     var definitionChanged: ((CGFloat) -> Void)!
     
+    var needRedraw: Bool = false
+    
     lazy var chartLayer: ChatLayer = {
         var layer = ChatLayer()
         layer.contentsScale = UIScreen.main.scale
@@ -103,30 +105,26 @@ class ChartTableViewCell: UITableViewCell {
         
         self.chartLayer.setNeedsDisplay()
         self.chartSelectorControl.setNeedsDisplay()
-        self.chartDefinitionControl.setNeedsDisplay()
         
         CATransaction.commit()
     }
     
     @objc func rangeSliderValueChanged(_ rangeSlider: ChartRangeControl) {
-        if !(rangeTimer?.isValid ?? false) {
-            rangeTimer = Timer.scheduledTimer(timeInterval: 0.14,
+        if !(loopTimer?.isValid ?? false) {
+            rangeTimer = Timer.scheduledTimer(timeInterval: 0.15,
                                               target: self,
                                               selector: #selector(updateYAxis),
                                               userInfo: nil,
                                               repeats: false)
+        } else {
+            needRedraw = true
         }
         
         rangeChanged(rangeSlider.lowerValue, rangeSlider.upperValue)
         rangeDidChange()
     }
     
-    @objc func rangeDefinitionValueChanged(_ control: ChartValuesDefinitionControl) {
-        definitionChanged(control.definitionValuePoint)
-        definitionDidChange()
-    }
-    
-    @objc func rangeDidChange() {
+    func rangeDidChange() {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         
@@ -138,30 +136,36 @@ class ChartTableViewCell: UITableViewCell {
         CATransaction.commit()
     }
     
+    @objc func rangeDefinitionValueChanged(_ control: ChartValuesDefinitionControl) {
+        definitionChanged(control.definitionValuePoint)
+        definitionDidChange()
+    }
+    
     @objc func updateYAxis() {
         var counter = 0
         let allCounter = 6
         let oldMinMax = chart.yAxisFrameRange
         
-        let i = 0
-        let upLowerXAxis = max(Int(chart.lowerXAxis.rounded(.up)) - i, 0)
-        let downLowerXAxis = max(Int(chart.lowerXAxis) - i, 0)
+        let upLowerXAxis = max(Int(chart.lowerXAxis.rounded(.up)), 0)
+        let downLowerXAxis = max(Int(chart.lowerXAxis), 0)
         
-        let upUpperXAxis = min(Int(chart.upperXAxis.rounded(.up)) + i, chart.x.count - 1)
-        let downUpperXAxis = min(Int(chart.upperXAxis) + i, chart.x.count - 1)
+        let upUpperXAxis = min(Int(chart.upperXAxis.rounded(.up)), chart.x.count - 1)
+        let downUpperXAxis = min(Int(chart.upperXAxis), chart.x.count - 1)
+        
+        let smoothFactor = chart.smoothFactor
         
         let visibleFrameGraphs: [Graph] = chart.visibleGraphs.map {
             var smoothGraph = $0
             
             smoothGraph.column = Array($0.column[Int(upLowerXAxis)..<Int(downUpperXAxis)])
             
-            var dif = ($0.column[upLowerXAxis] - $0.column[downLowerXAxis]) / chart.smoothFactor
-            var j = CGFloat(Int(max(0, chart.lowerXAxis - CGFloat(i)) * chart.smoothFactor) % Int(chart.smoothFactor))
-            smoothGraph.column.append($0.column[downLowerXAxis] + dif * CGFloat(j))
+            let difLower = ($0.column[upLowerXAxis] - $0.column[downLowerXAxis]) / smoothFactor
+            let difUpper = ($0.column[upUpperXAxis] - $0.column[downUpperXAxis]) / smoothFactor
+            let indentLower = CGFloat(Int(max(0, chart.lowerXAxis) * smoothFactor) % Int(smoothFactor))
+            let indentUpper = CGFloat(Int(min(CGFloat(chart.x.count - 1), chart.upperXAxis) * smoothFactor) % Int(smoothFactor))
             
-            dif = ($0.column[upUpperXAxis] - $0.column[downUpperXAxis]) / chart.smoothFactor
-            j = CGFloat(Int(min(CGFloat(chart.x.count - 1), chart.upperXAxis + CGFloat(i)) * chart.smoothFactor) % Int(chart.smoothFactor))
-            smoothGraph.column.append($0.column[downUpperXAxis] + dif * CGFloat(j))
+            smoothGraph.column.append($0.column[downLowerXAxis] + difLower * indentLower)
+            smoothGraph.column.append($0.column[downUpperXAxis] + difUpper * indentUpper)
             
             return smoothGraph
         }
@@ -195,8 +199,14 @@ class ChartTableViewCell: UITableViewCell {
             counter += 1
             if counter >= allCounter {
                 aSelf.changeYAxis(newMinMax.min, newMinMax.max)
-                
-                timer.invalidate()
+                if aSelf.needRedraw, !(aSelf.rangeTimer?.isValid ?? false) {
+                    aSelf.needRedraw = false
+                    timer.invalidate()
+                    aSelf.rangeTimer?.invalidate()
+                    aSelf.updateYAxis()
+                } else {
+                    timer.invalidate()
+                }
             }
             
             let _min = oldMinMax.min + minStep * CGFloat(counter)
@@ -208,7 +218,7 @@ class ChartTableViewCell: UITableViewCell {
         }
     }
     
-    @objc func definitionDidChange() {
+    func definitionDidChange() {
         chartLayer.chart = chart
     }
 }

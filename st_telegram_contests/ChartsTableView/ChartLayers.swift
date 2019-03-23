@@ -62,6 +62,8 @@ class RangeSliderThumbLayer: CALayer {
     
     var highlighted = false
     var isLowerThumb = true
+    var layerColor: CGColor = Theme.shared.controlColor.cgColor
+    var radius = 3.0
     weak var rangeSelector: ChartRangeControl?
     
     override init(layer: Any) {
@@ -70,11 +72,6 @@ class RangeSliderThumbLayer: CALayer {
     
     override init() {
         super.init()
-        contentsScale = UIScreen.main.scale
-        cornerRadius = 3.0
-        masksToBounds = false
-        shouldRasterize = true
-        maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner]
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -84,6 +81,15 @@ class RangeSliderThumbLayer: CALayer {
     override func draw(in ctx: CGContext) {
         let thumbWidth = RangeSliderThumbLayer.thumbWidth
         if isLowerThumb {
+            ctx.setFillColor(layerColor)
+            
+            let path = UIBezierPath(roundedRect: CGRect(origin: .zero, size: frame.size),
+                                    byRoundingCorners: [.topLeft, .bottomLeft],
+                                    cornerRadii: CGSize(width: radius, height: radius)).cgPath
+            
+            ctx.addPath(path)
+            ctx.drawPath(using: .fill)
+            
             ctx.drawLine(
                 fromPoint: CGPoint(x: thumbWidth / 2 + 3, y: bounds.height / 2 - 7),
                 toPoint: CGPoint(x: thumbWidth / 2 - 3, y: bounds.height / 2),
@@ -93,6 +99,14 @@ class RangeSliderThumbLayer: CALayer {
                 toPoint: CGPoint(x: thumbWidth / 2 + 3, y: bounds.height / 2 + 7),
                 color: UIColor.white.cgColor, lineWidth: 1.0)
         } else {
+            let path = UIBezierPath(roundedRect: CGRect(origin: .zero, size: frame.size),
+                                    byRoundingCorners: [.topRight, .bottomRight],
+                                    cornerRadii: CGSize(width: radius, height: radius)).cgPath
+            
+            ctx.setFillColor(layerColor)
+            ctx.addPath(path)
+            ctx.drawPath(using: .fill)
+            
             ctx.drawLine(
                 fromPoint: CGPoint(x: thumbWidth / 2 - 3, y: bounds.height / 2 - 7),
                 toPoint: CGPoint(x: thumbWidth / 2 + 3, y: bounds.height / 2),
