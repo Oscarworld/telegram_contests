@@ -19,7 +19,7 @@ class ViewController: UIViewController {
     private func updateColors() {
         view.backgroundColor = Theme.shared.additionalColor
         navigationController?.navigationBar.barTintColor = Theme.shared.mainColor
-        navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: Theme.shared.mainTextColor]
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: Theme.shared.mainTextColor]
         tableView.backgroundColor = Theme.shared.additionalColor
         UIApplication.shared.statusBarStyle = Theme.shared.barStyle
         tableView.reloadData()
@@ -29,7 +29,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         do {
-            tableView.charts = (try parseJson()).map{ OptimizedChart(chart: $0) }
+            tableView.charts = (try parseJson()).map { OptimizedChart(chart: $0) }
         } catch {
             fatalError("Can't parse json data")
         }

@@ -103,7 +103,6 @@ struct Chart: Decodable {
         }
     }
     
-    
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: ChartCodingKey.self)
         let columns = try container.decode([[Column]].self, forKey: .columns)
@@ -147,7 +146,7 @@ struct OptimizedChart {
     var smoothFactor: CGFloat = 4
     
     var xAxisFont = UIFont.systemFont(ofSize: 12.0)
-    var yAxisFont = UIFont.systemFont(ofSize: 12.0)  {
+    var yAxisFont = UIFont.systemFont(ofSize: 12.0) {
         didSet {
             updateInsets()
         }
@@ -207,7 +206,6 @@ struct OptimizedChart {
     mutating func hideGraph(at index: Int) {
         graphs[index].isHidden = true
         self.update(refresh: true)
-        
     }
     
     mutating func showGraph(at index: Int) {
@@ -258,7 +256,6 @@ struct OptimizedChart {
         let segments = (xAxisValues.count - 1) * Int(smoothFactor) + rsIndex - lsIndex
         
         self.updateSegmentsXAxis()
-        
         self.rangeYears = Array(years[Int(lowerXAxis)..<Int(upperXAxis)])
         self.rangeDays = Array(days[Int(lowerXAxis)..<Int(upperXAxis)])
         self.lsIndex = lsIndex
